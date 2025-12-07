@@ -30,6 +30,37 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.0.4'
+
+	// security
+//	implementation 'org.springframework.boot:spring-boot-starter-security'
+//	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+//	testImplementation 'org.springframework.security:spring-security-test'
+
+	// DB
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'  // JDBC API
+	implementation 'org.mariadb.jdbc:mariadb-java-client:3.1.4' // MariaDB JDBC 드라이버
+
+	// JPA
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	runtimeOnly("com.h2database:h2")
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// 외부 API 인터페이스
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {
