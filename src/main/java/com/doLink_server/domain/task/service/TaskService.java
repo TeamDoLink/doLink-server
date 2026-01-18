@@ -42,11 +42,11 @@ public class TaskService {
         Collection collection = collectionRepository.findByIdWithUser(request.collectionId())
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
 
-        // 3) 권한 확인
-        if (!collection.getUser().getUserId().equals(user.getUserId())) {
+        // 3) 권한 확인 (내 모음인지) (403)
+        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
-
+        
         // 4) Task 저장
         Task saved = taskRepository.save(
                 Task.builder()
@@ -75,7 +75,7 @@ public class TaskService {
 
         // 2) 모음 조회 (없으면 404)
         Collection collection = collectionRepository.findByIdWithUser(collectionId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
 
         // 3) 권한 확인 (내 모음인지) (403)
         if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
