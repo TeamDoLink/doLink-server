@@ -3,10 +3,13 @@ package com.doLink_server.domain.collection.entity;
 
 import com.doLink_server.global.common.BaseEntity;
 import com.doLink_server.global.enums.Category;
+import com.doLink_server.user.entity.Users;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 
 /**
@@ -16,7 +19,7 @@ import lombok.*;
 @Setter
 @Entity
 @Builder
-@Table(name = "collection", schema = "talktodo")
+@Table(name = "collection", schema = "dolink")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Collection extends BaseEntity {
@@ -46,12 +49,11 @@ public class Collection extends BaseEntity {
     private Category category;
 
     /**
-     * 사용자 ID (UUID, BINARY 16)
+     * 사용자 (Users 1 : Collection N)
      */
-    @Column(name = "user_id", nullable = false, columnDefinition = "BINARY(16)")
-    private byte[] userId;
-
-
-
-
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "BINARY(16)")
+    private Users user;
 }
