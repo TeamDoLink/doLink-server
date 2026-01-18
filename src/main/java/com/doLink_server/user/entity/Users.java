@@ -19,7 +19,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "users", schema = "talktodo")
+@Table(name = "users", schema = "dolink")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Users extends BaseEntity {

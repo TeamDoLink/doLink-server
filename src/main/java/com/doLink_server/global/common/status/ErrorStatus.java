@@ -34,19 +34,26 @@ public enum ErrorStatus implements BaseErrorCode {
     _NOT_IMPLEMENTED_SOCIAL(HttpStatus.NOT_IMPLEMENTED, "SOCIAL501", "해당 소셜 플랫폼의 해제 기능은 아직 구현되지 않았습니다."),
     _KAKAO_UNLINK_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SOCIAL502", "카카오 관리자 인증 해제에 실패했습니다."),
 
-    // Task 에러
+    // 두링크_collection 에러
+    _INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "COLL400", "유효하지 않은 모음 카테고리입니다."),
+    _NOT_FOUND_COLLECTION(HttpStatus.NOT_FOUND, "COLL404", "모음이 존재하지 않습니다."),
+    _FORBIDDEN_COLLECTION(HttpStatus.FORBIDDEN, "COLL403", "모음에 대한 접근 권한이 없습니다."),
+
+    // 두링크_Task 에러
     _NOT_FOUND_TASK(HttpStatus.NOT_FOUND, "TASK404", "할 일이 존재하지 않습니다."),
-    _UNAUTHORIZED_ACCESS_TASK(HttpStatus.FORBIDDEN, "TASK403", "할 일 권한이 없습니다."),
+    _UNAUTHORIZED_TASK(HttpStatus.FORBIDDEN, "TASK403", "할 일 권한이 없습니다."),
+
+    // 톡투두_Task 에러
     _INVALID_PRIORITY(HttpStatus.BAD_REQUEST, "TASK400", "잘못된 우선순위입니다."),
     _INVALID_REPEAT_CONFIGURATION(HttpStatus.BAD_REQUEST, "TASK410", "잘못된 반복 설정입니다."),
 
-    // Memo 에러
+    // 톡투두_Memo 에러
     _NOT_FOUND_MEMO(HttpStatus.NOT_FOUND, "MEMO404", "메모가 존재하지 않습니다."),
 
-    // Goal 에러
+    // 톡투두_Goal 에러
     _NOT_FOUND_GOAL(HttpStatus.NOT_FOUND, "GOAL404", "목표가 존재하지 않습니다."),
 
-    // Security 에러
+    // 톡투두_Security 에러
     NEED_LOGIN(HttpStatus.NOT_FOUND, "SEC1001", "로그인 후 사용해주세요."),
     ALREADY_LOGOUT(HttpStatus.UNAUTHORIZED, "SEC1002", "이미 로그아웃 된 사용자입니다."),
     INVALID_TOKEN(HttpStatus.BAD_REQUEST, "SEC4001", "잘못된 형식의 토큰입니다."),
