@@ -64,6 +64,12 @@ dependencies {
 
 	// 외부 API 인터페이스
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// AWS:S3
+	implementation 'org.jsoup:jsoup:1.17.2' // HTML 문서에서 og:title, og:image 등 OG 메타 태그를 파싱하기 위한 라이브러리
+	implementation platform('software.amazon.awssdk:bom:2.25.0') // AWS SDK v2
+	implementation 'software.amazon.awssdk:s3' // S3 객체 업로드/다운로드를 위한 클라이언트
+
 }
 
 tasks.named('test') {
