@@ -9,7 +9,9 @@ public record LinkCreateResult(
         String description,
         String siteName,
         String canonicalUrl,
+        String originalKey,
+        String originalUrl,
         String thumbnailKey,
         String thumbnailUrl
-) {
-}
+) {}
+
