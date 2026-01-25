@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 
 /**
  * S3Uploader
@@ -33,6 +34,7 @@ public class S3Uploader {
                 .bucket(bucket)
                 .key(key)
                 .contentType(contentType)
+                .serverSideEncryption(ServerSideEncryption.AES256) // SSE-S3
                 .build();
 
         s3.putObject(putReq, RequestBody.fromBytes(bytes));
