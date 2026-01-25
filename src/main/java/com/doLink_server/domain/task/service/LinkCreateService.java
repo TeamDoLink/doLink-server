@@ -13,14 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 링크 생성 시 OG 메타데이터를 파싱하고
- * 대표 썸네일을 생성하여 S3에 저장하는 서비스
- *
- * - 썸네일: 256x256 cover crop + webp(quality 0.85)
- * - DB에는 S3 key 저장
- * - 응답에는 presigned URL 포함
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,59 +28,49 @@ public class LinkCreateService {
     @Transactional
     public LinkCreateResult create(String url) {
         try {
-            // 1️⃣ OG 메타데이터 파싱
+            // 1) OG 메타 파싱
             OgMetadata og = ogParser.parse(url);
             log.info("[LinkCreate] og.imageUrl={}", og.imageUrl());
 
+            String originalKey = null;
+            String originalUrl = null;
             String thumbnailKey = null;
             String thumbnailUrl = null;
 
-            // 2️⃣ OG 이미지가 있는 경우에만 처리
+            // 2) OG 이미지 처리
             if (og.imageUrl() != null) {
+                ImageDownloader.DownloadedImage img = imageDownloader.download(og.imageUrl());
 
-                ImageDownloader.DownloadedImage img =
-                        imageDownloader.download(og.imageUrl());
+                if (img == null || img.bytes() == null || img.bytes().length == 0) {
+                    log.warn("[LinkCreate] image download failed or empty. url={}", og.imageUrl());
+                } else {
+                    // (A) 원본 업로드
+                    originalKey = keyGenerator.generateOriginal(img.contentType());
+                    originalKey = s3Uploader.uploadPrivate(originalKey, img.bytes(), img.contentType());
+                    originalUrl = presignedUrlProvider.presignGetUrl(originalKey);
 
-                if (img == null) {
-                    log.warn("[LinkCreate] image download failed. url={}", og.imageUrl());
-                }
-
-                if (img != null && img.bytes() != null && img.bytes().length > 0) {
-
-                    // 3️⃣ 썸네일 리사이즈
-                    OgThumbnailResizer.ResizedImage thumb =
-                            thumbnailResizer.toSquarePng(img.bytes());
-
-                    if (thumb == null) {
+                    // (B) 썸네일 생성 + 업로드
+                    OgThumbnailResizer.ResizedImage thumb = thumbnailResizer.toSquarePng(img.bytes());
+                    if (thumb == null || thumb.bytes() == null || thumb.bytes().length == 0) {
                         log.warn("[LinkCreate] thumbnail resize failed.");
-                    }
-
-                    if (thumb != null) {
-                        // 4️⃣ 썸네일 S3 key 생성
-                        String key = keyGenerator.generateThumbPng();
-
-                        // 5️⃣ S3 업로드
-                        thumbnailKey = s3Uploader.uploadPrivate(
-                                key,
-                                thumb.bytes(),
-                                thumb.contentType()
-                        );
+                    } else {
+                        thumbnailKey = keyGenerator.generateThumbPng();
+                        thumbnailKey = s3Uploader.uploadPrivate(thumbnailKey, thumb.bytes(), thumb.contentType());
+                        thumbnailUrl = presignedUrlProvider.presignGetUrl(thumbnailKey);
 
                         log.info("[LinkCreate] thumbnail uploaded. key={}", thumbnailKey);
-
-                        // 6️⃣ presigned URL 발급
-                        thumbnailUrl =
-                                presignedUrlProvider.presignGetUrl(thumbnailKey);
                     }
                 }
             }
 
-            // 7️⃣ 결과 반환
+            // 3) 결과 반환 (DB 저장에 필요한 key 포함)
             return new LinkCreateResult(
                     og.title(),
                     og.description(),
                     og.siteName(),
                     og.canonicalUrl(),
+                    originalKey,
+                    originalUrl,
                     thumbnailKey,
                     thumbnailUrl
             );
