@@ -9,18 +9,24 @@ import com.doLink_server.domain.collection.entity.Collection;
 import com.doLink_server.domain.collection.repository.CollectionRepository;
 
 
+import com.doLink_server.domain.task.repository.CollectionThumbnailRow;
+import com.doLink_server.domain.task.repository.TaskRepository;
 import com.doLink_server.global.common.status.ErrorStatus;
 import com.doLink_server.global.enums.Category;
 import com.doLink_server.global.exception.GeneralException;
+import com.doLink_server.infra.s3.S3PresignedUrlProvider;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 모음 서비스
@@ -31,50 +37,126 @@ import java.util.List;
 public class CollectionService {
 
     private final CollectionRepository collectionRepository;
+    private final TaskRepository taskRepository;
+    private final S3PresignedUrlProvider presignedUrlProvider;
     private final AuthService authService;     // 로그인 유저 조회
     private final UserService userService;
 
     /**
-     * 모음 전체 조회 (Slice + 최신 생성 순)
+     * 모음 전체 조회 (Slice + 최신 생성 순) + 썸네일(최대 4개) 포함
      */
     public Slice<CollectionResponse> listAllSlice(int page, int size) {
 
         Users user = getLoginUser();
         PageRequest pageable = PageRequest.of(page, size);
 
-        return collectionRepository
-                .findAllByUserOrderByCreatedAtDesc(user, pageable)
-                .map(this::toResponse);
+        Slice<Collection> slice =
+                collectionRepository.findAllByUserOrderByCreatedAtDesc(user, pageable);
+
+        List<Collection> collections = slice.getContent();
+        if (collections.isEmpty()) {
+            return new SliceImpl<>(List.of(), pageable, slice.hasNext());
+        }
+
+        // 1) 모음 ID 수집
+        List<Long> collectionIds = collections.stream()
+                .map(Collection::getCollectionId)
+                .toList();
+
+        // 2) 모음별 썸네일 key를 한 번에 조회 (모음당 최대 4개)
+        List<CollectionThumbnailRow> rows =
+                taskRepository.findTop4ThumbnailsByCollectionIds(collectionIds);
+
+        // 3) collectionId -> thumbnailKey 리스트로 그룹핑
+        Map<Long, List<String>> thumbKeyMap = rows.stream()
+                .collect(Collectors.groupingBy(
+                        CollectionThumbnailRow::getCollectionId,
+                        Collectors.mapping(
+                                CollectionThumbnailRow::getThumbnailKey,
+                                Collectors.toList()
+                        )
+                ));
+
+        // 4) presigned URL 변환 + DTO 생성
+        List<CollectionResponse> responses = collections.stream()
+                .map(c -> {
+                    List<String> thumbnailUrls = thumbKeyMap
+                            .getOrDefault(c.getCollectionId(), List.of())
+                            .stream()
+                            .map(presignedUrlProvider::presignGetUrl)
+                            .toList();
+
+                    return CollectionResponse.builder()
+                            .collectionId(c.getCollectionId())
+                            .name(c.getName())
+                            .category(c.getCategory())
+                            .thumbnails(thumbnailUrls)
+                            .build();
+                })
+                .toList();
+
+        return new SliceImpl<>(responses, pageable, slice.hasNext());
     }
 
     /**
-     * 카테고리별 모음 조회 (Slice + 최신 생성 순)
+     * 카테고리별 모음 조회 (Slice + 최신 생성 순) + 썸네일(최대 4개) 포함
      */
-    public Slice<CollectionResponse> listByCategorySlice(
-            Category category,
-            int page,
-            int size
-    ) {
+    public Slice<CollectionResponse> listByCategorySlice(Category category, int page, int size) {
+
         Users user = getLoginUser();
         PageRequest pageable = PageRequest.of(page, size);
 
-        return collectionRepository
-                .findAllByUserAndCategoryOrderByCreatedAtDesc(user, category, pageable)
-                .map(this::toResponse);
+        Slice<Collection> slice =
+                collectionRepository.findAllByUserAndCategoryOrderByCreatedAtDesc(user, category, pageable);
+
+        List<Collection> collections = slice.getContent();
+        if (collections.isEmpty()) {
+            return new SliceImpl<>(List.of(), pageable, slice.hasNext());
+        }
+
+        // 1) 모음 ID 수집
+        List<Long> collectionIds = collections.stream()
+                .map(Collection::getCollectionId)
+                .toList();
+
+        // 2) 모음별 썸네일 key를 한 번에 조회 (모음당 최대 4개)
+        List<CollectionThumbnailRow> rows =
+                taskRepository.findTop4ThumbnailsByCollectionIds(collectionIds);
+
+        // 3) collectionId -> thumbnailKey 리스트로 그룹핑
+        Map<Long, List<String>> thumbKeyMap = rows.stream()
+                .collect(Collectors.groupingBy(
+                        CollectionThumbnailRow::getCollectionId,
+                        Collectors.mapping(
+                                CollectionThumbnailRow::getThumbnailKey,
+                                Collectors.toList()
+                        )
+                ));
+
+        // 4) presigned URL 변환 + DTO 생성
+        List<CollectionResponse> responses = collections.stream()
+                .map(c -> {
+                    List<String> thumbnailUrls = thumbKeyMap
+                            .getOrDefault(c.getCollectionId(), List.of())
+                            .stream()
+                            .map(presignedUrlProvider::presignGetUrl)
+                            .toList();
+
+                    return CollectionResponse.builder()
+                            .collectionId(c.getCollectionId())
+                            .name(c.getName())
+                            .category(c.getCategory())
+                            .thumbnails(thumbnailUrls)
+                            .build();
+                })
+                .toList();
+
+        return new SliceImpl<>(responses, pageable, slice.hasNext());
     }
 
     private Users getLoginUser() {
         String currentUserId = authService.getAuthenticatedUserId();
         return userService.findExistingUser(currentUserId);
-    }
-
-    private CollectionResponse toResponse(Collection c) {
-        return CollectionResponse.builder()
-                .collectionId(c.getCollectionId())
-                .name(c.getName())
-                .category(c.getCategory())
-                .thumbnails(List.of()) // TODO: 썸네일 추후 추가
-                .build();
     }
 
     /**

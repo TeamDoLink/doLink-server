@@ -3,7 +3,6 @@ package com.doLink_server.domain.collection.repository;
 import com.doLink_server.domain.collection.entity.Collection;
 import com.doLink_server.global.enums.Category;
 import com.doLink_server.user.entity.Users;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;

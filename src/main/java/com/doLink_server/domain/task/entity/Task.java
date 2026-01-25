@@ -61,6 +61,21 @@ public class Task extends BaseEntity {
     private String link;
 
     /**
+     * OG 대표 썸네일 S3 key
+     * - DB에는 URL이 아니라 key만 저장 (presigned는 조회 시 생성)
+     */
+    @Column(name = "thumbnail_key", length = 500)
+    private String thumbnailKey;
+
+    /**
+     * OG 원본 이미지 S3 key
+     * - DB에는 URL이 아니라 key만 저장
+     */
+    @Column(name = "og_image_key", length = 500)
+    private String ogImageKey;
+
+
+    /**
      * 메모
      */
     @Column(name = "memo")
