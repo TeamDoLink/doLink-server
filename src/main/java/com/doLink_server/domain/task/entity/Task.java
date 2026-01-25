@@ -68,6 +68,14 @@ public class Task extends BaseEntity {
     private String thumbnailKey;
 
     /**
+     * OG 원본 이미지 S3 key
+     * - DB에는 URL이 아니라 key만 저장
+     */
+    @Column(name = "og_image_key", length = 500)
+    private String ogImageKey;
+
+
+    /**
      * 메모
      */
     @Column(name = "memo")
