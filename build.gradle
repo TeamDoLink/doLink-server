@@ -70,6 +70,11 @@ dependencies {
 	implementation platform('software.amazon.awssdk:bom:2.25.0') // AWS SDK v2
 	implementation 'software.amazon.awssdk:s3' // S3 객체 업로드/다운로드를 위한 클라이언트
 
+	// OG 메타데이터 분석 & 파싱 구현
+	implementation 'org.jsoup:jsoup:1.17.2' // OG
+	implementation 'net.coobird:thumbnailator:0.4.20' // 썸네일
+
+
 }
 
 tasks.named('test') {
