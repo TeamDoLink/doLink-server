@@ -50,12 +50,13 @@ public class TaskService {
         }
 
         // 4) 링크가 있으면 OG + 썸네일 처리
+        String ogImageKey = null;
         String thumbnailKey = null;
 
         if (request.link() != null && !request.link().isBlank()) {
-            LinkCreateResult linkResult =
-                    linkCreateService.create(request.link());
+            LinkCreateResult linkResult = linkCreateService.create(request.link());
 
+            ogImageKey = linkResult.originalKey();
             thumbnailKey = linkResult.thumbnailKey();
         }
 
@@ -67,7 +68,8 @@ public class TaskService {
                         .title(request.title())
                         .link(request.link())
                         .memo(request.memo())
-                        .thumbnailKey(thumbnailKey) 
+                        .ogImageKey(ogImageKey)
+                        .thumbnailKey(thumbnailKey)
                         .inout(true)
                         .status(false)
                         .build()
