@@ -143,6 +143,24 @@ public class TaskService {
                 .map(this::toResponse);
     }
 
+    /**
+     * 할 일 삭제
+     */
+    @Transactional
+    public void deleteTask(Long taskId) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        Task task = taskRepository.findByIdWithUser(taskId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+
+        if (!Arrays.equals(task.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        taskRepository.delete(task);
+    }
+
     private TaskResponse toResponse(Task t) {
         return TaskResponse.builder()
                 .taskId(t.getTaskId())

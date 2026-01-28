@@ -58,4 +58,11 @@ public class TaskController {
     public ApiResponse<TaskResponse> getTask(@PathVariable Long taskId) {
         return ApiResponse.onSuccess(taskService.getTask(taskId));
     }
+
+    @DeleteMapping("/{taskId}")
+    @Operation(summary = "할 일 삭제", description = "taskId에 해당하는 할 일을 삭제한다.")
+    public ApiResponse<String> deleteTask(@PathVariable Long taskId) {
+        taskService.deleteTask(taskId);
+        return ApiResponse.onSuccess("할 일이 삭제되었습니다.");
+    }
 }

@@ -46,5 +46,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t JOIN FETCH t.user u JOIN FETCH t.collection c WHERE t.taskId = :taskId")
     Optional<Task> findByIdWithUserAndCollection(@Param("taskId") Long taskId);
 
+    @Query("SELECT t FROM Task t JOIN FETCH t.user c WHERE t.taskId = :taskId")
+    Optional<Task> findByIdWithUser(@Param("taskId") Long taskId);
+
     Slice<Task> findAllByCollection_CollectionId(Long collectionId, Pageable pageable);
 }
