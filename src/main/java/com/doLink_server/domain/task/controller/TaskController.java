@@ -2,6 +2,7 @@ package com.doLink_server.domain.task.controller;
 
 import com.doLink_server.domain.task.dto.TaskCreateRequest;
 import com.doLink_server.domain.task.dto.TaskResponse;
+import com.doLink_server.domain.task.dto.TaskUpdateRequest;
 import com.doLink_server.domain.task.service.TaskService;
 import com.doLink_server.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +60,21 @@ public class TaskController {
         return ApiResponse.onSuccess(taskService.getTask(taskId));
     }
 
+    /**
+     * 할 일 수정
+     */
+    @PatchMapping("/{taskId}")
+    @Operation(summary = "할 일 수정", description = "할 일의 제목, 링크, 메모, 상태 등을 수정한다.")
+    public ApiResponse<TaskResponse> updateTask(
+            @PathVariable Long taskId,
+            @RequestBody TaskUpdateRequest request
+    ) {
+        return ApiResponse.onSuccess(taskService.updateTask(taskId, request));
+    }
+
+    /**
+     * 할 일 삭제
+     */
     @DeleteMapping("/{taskId}")
     @Operation(summary = "할 일 삭제", description = "taskId에 해당하는 할 일을 삭제한다.")
     public ApiResponse<String> deleteTask(@PathVariable Long taskId) {

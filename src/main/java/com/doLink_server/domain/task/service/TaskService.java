@@ -6,6 +6,7 @@ import com.doLink_server.domain.collection.repository.CollectionRepository;
 import com.doLink_server.domain.task.dto.LinkCreateResult;
 import com.doLink_server.domain.task.dto.TaskCreateRequest;
 import com.doLink_server.domain.task.dto.TaskResponse;
+import com.doLink_server.domain.task.dto.TaskUpdateRequest;
 import com.doLink_server.domain.task.entity.Task;
 import com.doLink_server.domain.task.repository.TaskRepository;
 import com.doLink_server.global.common.status.ErrorStatus;
@@ -141,6 +142,41 @@ public class TaskService {
 
         return taskRepository.findAllByCollection_CollectionId(collectionId, pageable)
                 .map(this::toResponse);
+    }
+
+    /**
+     * 할 일 수정
+     */
+    @Transactional
+    public TaskResponse updateTask(Long taskId, TaskUpdateRequest request) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        Task task = taskRepository.findByIdWithUserAndCollection(taskId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+
+        // 권한 확인
+        if (!Arrays.equals(task.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        task.updateElements(request.title(), request.memo(), request.status(), request.inout());
+
+        // 링크 수정 로직
+        if (request.link() != null) {
+            String newLink = request.link();
+
+            if (newLink.isBlank()) {
+                // 링크 삭제
+                task.updateLink(null, null, null);
+            } else if (!newLink.equals(task.getLink())) {
+                // 링크 변경 (새로 파싱)
+                LinkCreateResult linkResult = linkCreateService.create(newLink);
+                task.updateLink(newLink, linkResult.originalKey(), linkResult.thumbnailKey());
+            }
+        }
+
+        return toResponse(task);
     }
 
     /**
