@@ -44,9 +44,10 @@ public class TaskController {
     public ApiResponse<Slice<TaskResponse>> listByCollection(
             @PathVariable Long collectionId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "desc") String sort
     ) {
-        return ApiResponse.onSuccess(taskService.listByCollection(collectionId, page, size));
+        return ApiResponse.onSuccess(taskService.listByCollection(collectionId, page, size, sort));
     }
 
     /**

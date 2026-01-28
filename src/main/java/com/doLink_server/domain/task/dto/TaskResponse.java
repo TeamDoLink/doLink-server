@@ -2,6 +2,8 @@ package com.doLink_server.domain.task.dto;
 
 import lombok.Builder;
 
+import java.time.LocalDateTime;
+
 @Builder
 public record TaskResponse(
         Long taskId,
@@ -10,6 +12,7 @@ public record TaskResponse(
         String link,
         String memo,
         Boolean status,
-        Boolean inout
+        Boolean inout,
+        LocalDateTime createdAt
 ) {
 }

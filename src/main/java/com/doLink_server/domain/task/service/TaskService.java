@@ -122,7 +122,7 @@ public class TaskService {
     /**
      * 모음별 Task 전체 조회 (페이징)
      */
-    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size) {
+    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size, String sort) {
         String currentUserId = authService.getAuthenticatedUserId();
         Users user = userService.findExistingUser(currentUserId);
 
@@ -134,8 +134,10 @@ public class TaskService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
 
+        Sort.Direction direction = "asc".equalsIgnoreCase(sort) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
         // 정렬: Task ID 기준 내림차순 (최신순)
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "taskId"));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, "taskId"));
 
         return taskRepository.findAllByCollection_CollectionId(collectionId, pageable)
                 .map(this::toResponse);
@@ -150,6 +152,7 @@ public class TaskService {
                 .memo(t.getMemo())
                 .status(t.getStatus())
                 .inout(t.getInout())
+                .createdAt(t.getCreatedAt())
                 .build();
     }
 }
