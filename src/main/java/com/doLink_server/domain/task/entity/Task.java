@@ -93,4 +93,33 @@ public class Task extends BaseEntity {
      */
     @Column(name = "in_out")
     private Boolean inout;
+
+    /**
+     * 기본 정보 수정 메서드
+     * - 값이 null이 아닐 때만 변경 (PATCH 방식)
+     */
+    public void updateElements(String title, String memo, Boolean status, Boolean inout) {
+        if (title != null && !title.isBlank()) {
+            this.title = title;
+        }
+        if (memo != null) {
+            this.memo = memo;
+        }
+        if (status != null) {
+            this.status = status;
+        }
+        if (inout != null) {
+            this.inout = inout;
+        }
+    }
+
+    /**
+     * 링크 및 OG 데이터 수정 메서드
+     * - 링크 관련 정보는 세트로 움직이므로 별도 메서드로 분리
+     */
+    public void updateLink(String link, String ogImageKey, String thumbnailKey) {
+        this.link = link;
+        this.ogImageKey = ogImageKey;
+        this.thumbnailKey = thumbnailKey;
+    }
 }

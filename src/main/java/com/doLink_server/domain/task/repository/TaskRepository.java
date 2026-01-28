@@ -2,11 +2,14 @@ package com.doLink_server.domain.task.repository;
 
 import com.doLink_server.domain.task.entity.Task;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
@@ -39,4 +42,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<CollectionThumbnailRow> findTop4ThumbnailsByCollectionIds(
             @Param("collectionIds") List<Long> collectionIds
     );
+
+    /**
+     * 할 일 단건 조회 (User, Collection까지 fetch join)
+     * - 삭제/수정 등 권한 체크 시 Lazy 로딩 추가 쿼리를 방지하기 위함
+     */
+    @Query("SELECT t FROM Task t JOIN FETCH t.user u JOIN FETCH t.collection c WHERE t.taskId = :taskId")
+    Optional<Task> findByIdWithUserAndCollection(@Param("taskId") Long taskId);
+
+    /**
+     * 할 일 단건 조회 (User까지 fetch join)
+     * - 삭제/수정 등 권한 체크 시 Lazy 로딩 추가 쿼리를 방지하기 위함
+     */
+    @Query("SELECT t FROM Task t JOIN FETCH t.user c WHERE t.taskId = :taskId")
+    Optional<Task> findByIdWithUser(@Param("taskId") Long taskId);
+
+    /**
+     * 모음별 Task 전체 조회 (페이징, 무한 스크롤)
+     */
+    Slice<Task> findAllByCollection_CollectionId(Long collectionId, Pageable pageable);
 }
