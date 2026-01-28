@@ -13,6 +13,9 @@ import com.doLink_server.global.exception.GeneralException;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,24 +84,27 @@ public class TaskService {
     /**
      * 모음별 Task 전체 조회
      */
-    public List<TaskResponse> listByCollection(Long collectionId) {
+//    public List<TaskResponse> listByCollection(Long collectionId) {
+//
+//        String currentUserId = authService.getAuthenticatedUserId();
+//        Users user = userService.findExistingUser(currentUserId);
+//
+//        Collection collection = collectionRepository.findByIdWithUser(collectionId)
+//                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
+//
+//        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
+//            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+//        }
+//
+//        return taskRepository.findAllByCollection_CollectionIdOrderByTaskIdDesc(collectionId)
+//                .stream()
+//                .map(this::toResponse)
+//                .toList();
+//    }
 
-        String currentUserId = authService.getAuthenticatedUserId();
-        Users user = userService.findExistingUser(currentUserId);
-
-        Collection collection = collectionRepository.findByIdWithUser(collectionId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
-
-        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
-            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
-        }
-
-        return taskRepository.findAllByCollection_CollectionIdOrderByTaskIdDesc(collectionId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
-    }
-
+    /**
+     * 단일 Task 조회
+     */
     public TaskResponse getTask(Long taskId) {
         String currentUserId = authService.getAuthenticatedUserId();
         Users user = userService.findExistingUser(currentUserId);
@@ -111,6 +117,28 @@ public class TaskService {
         }
 
         return toResponse(task);
+    }
+
+    /**
+     * 모음별 Task 전체 조회 (페이징)
+     */
+    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        Collection collection = collectionRepository.findByIdWithUser(collectionId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
+
+        // 권한 확인
+        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        // 정렬: Task ID 기준 내림차순 (최신순)
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "taskId"));
+
+        return taskRepository.findAllByCollection_CollectionId(collectionId, pageable)
+                .map(this::toResponse);
     }
 
     private TaskResponse toResponse(Task t) {

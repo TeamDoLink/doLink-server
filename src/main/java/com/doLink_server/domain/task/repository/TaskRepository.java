@@ -2,6 +2,8 @@ package com.doLink_server.domain.task.repository;
 
 import com.doLink_server.domain.task.entity.Task;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -43,4 +45,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t JOIN FETCH t.user u JOIN FETCH t.collection c WHERE t.taskId = :taskId")
     Optional<Task> findByIdWithUserAndCollection(@Param("taskId") Long taskId);
+
+    Slice<Task> findAllByCollection_CollectionId(Long collectionId, Pageable pageable);
 }
