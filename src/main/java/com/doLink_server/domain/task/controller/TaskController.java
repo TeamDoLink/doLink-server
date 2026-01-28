@@ -40,6 +40,9 @@ public class TaskController {
 //        return ApiResponse.onSuccess(taskService.listByCollection(collectionId));
 //    }
 
+    /**
+     * 모음별 Task 전체 조회 (페이징, 무한 스크롤)
+     */
     @GetMapping("/collections/{collectionId}")
     @Operation(summary = "모음별 Task 전체 조회", description = "collectionId에 속한 Task를 페이징(무한 스크롤)하여 조회한다.")
     public ApiResponse<Slice<TaskResponse>> listByCollection(
