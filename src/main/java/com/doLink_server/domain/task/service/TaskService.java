@@ -99,6 +99,20 @@ public class TaskService {
                 .toList();
     }
 
+    public TaskResponse getTask(Long taskId) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        Task task = taskRepository.findByIdWithUserAndCollection(taskId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+
+        if (!Arrays.equals(task.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        return toResponse(task);
+    }
+
     private TaskResponse toResponse(Task t) {
         return TaskResponse.builder()
                 .taskId(t.getTaskId())

@@ -38,10 +38,12 @@ public class TaskController {
         return ApiResponse.onSuccess(taskService.listByCollection(collectionId));
     }
 
-
-
-
-
-
-
+    /**
+     * 할 일 단건 조회
+     */
+    @GetMapping("/{taskId}")
+    @Operation(summary = "할 일 상세 조회", description = "taskId에 해당하는 할 일을 조회한다.")
+    public ApiResponse<TaskResponse> getTask(@PathVariable Long taskId) {
+        return ApiResponse.onSuccess(taskService.getTask(taskId));
+    }
 }

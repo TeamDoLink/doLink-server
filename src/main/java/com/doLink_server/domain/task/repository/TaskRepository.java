@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
@@ -39,4 +40,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<CollectionThumbnailRow> findTop4ThumbnailsByCollectionIds(
             @Param("collectionIds") List<Long> collectionIds
     );
+
+    @Query("SELECT t FROM Task t JOIN FETCH t.user u JOIN FETCH t.collection c WHERE t.taskId = :taskId")
+    Optional<Task> findByIdWithUserAndCollection(@Param("taskId") Long taskId);
 }
