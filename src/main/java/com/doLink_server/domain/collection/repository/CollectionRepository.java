@@ -63,4 +63,8 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     List<Collection> findAllByUser(Users user);
 
 
+    /**
+     * [검색용] 사용자별 모음 이름 포함 검색 (페이징)
+     */
+    Slice<Collection> findByUserAndNameContaining(Users user, String keyword, Pageable pageable);
 }
