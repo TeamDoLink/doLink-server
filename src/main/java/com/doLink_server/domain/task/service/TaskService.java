@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -81,27 +80,6 @@ public class TaskService {
 
         return toResponse(saved);
     }
-
-    /**
-     * 모음별 Task 전체 조회
-     */
-//    public List<TaskResponse> listByCollection(Long collectionId) {
-//
-//        String currentUserId = authService.getAuthenticatedUserId();
-//        Users user = userService.findExistingUser(currentUserId);
-//
-//        Collection collection = collectionRepository.findByIdWithUser(collectionId)
-//                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
-//
-//        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
-//            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
-//        }
-//
-//        return taskRepository.findAllByCollection_CollectionIdOrderByTaskIdDesc(collectionId)
-//                .stream()
-//                .map(this::toResponse)
-//                .toList();
-//    }
 
     /**
      * 단일 Task 조회
@@ -175,6 +153,32 @@ public class TaskService {
                 task.updateLink(newLink, linkResult.originalKey(), linkResult.thumbnailKey());
             }
         }
+
+        return toResponse(task);
+    }
+
+    /**
+     * 할 일 완료 처리
+     */
+    @Transactional
+    public TaskResponse completeTask(Long taskId) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        Task task = taskRepository.findByIdWithUserAndCollection(taskId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+
+        // 권한 확인
+        if (!Arrays.equals(task.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        // 이미 완료인 경우 그냥 현재 상태 반환
+        if (Boolean.TRUE.equals(task.getStatus())) {
+            return toResponse(task);
+        }
+
+        task.setStatus(true);
 
         return toResponse(task);
     }
