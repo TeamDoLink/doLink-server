@@ -43,43 +43,48 @@ public class SearchService {
         // 2. 페이징 설정 (최신순, 최대 5개)
         PageRequest pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // 3. 키워드가 없거나 공백이면 빈 Slice 반환
+        // 3. 키워드가 없거나 공백이면 빈 List 반환
         if (keyword == null || keyword.trim().isEmpty()) {
-            Slice<CollectionResponse> emptyCollections = new SliceImpl<>(Collections.emptyList(), pageable, false);
-            Slice<TaskResponse> emptyTasks = new SliceImpl<>(Collections.emptyList(), pageable, false);
-
             return SearchResponse.builder()
-                    .collections(emptyCollections)
-                    .tasks(emptyTasks)
+                    .collections(Collections.emptyList())
+                    .tasks(Collections.emptyList())
+                    .hasMoreCollections(false)
+                    .hasMoreTasks(false)
                     .build();
         }
 
         // 4. 모음 이름 검색 (최대 5개)
         Slice<Collection> collectionSlice = collectionRepository.findByUserAndNameContaining(user, keyword, pageable);
-        Slice<CollectionResponse> collectionResponses = collectionSlice.map(c -> CollectionResponse.builder()
-                .collectionId(c.getCollectionId())
-                .name(c.getName())
-                .category(c.getCategory())
-                .thumbnails(List.of())
-                .build());
+        List<CollectionResponse> collectionResponses = collectionSlice.getContent().stream()
+                .map(c -> CollectionResponse.builder()
+                        .collectionId(c.getCollectionId())
+                        .name(c.getName())
+                        .category(c.getCategory())
+                        .thumbnails(List.of())
+                        .build())
+                .toList();
 
         // 5. 할 일 제목 검색 (최대 5개)
         Slice<Task> taskSlice = taskRepository.findByUserAndTitleContaining(user, keyword, pageable);
-        Slice<TaskResponse> taskResponses = taskSlice.map(t -> TaskResponse.builder()
-                .taskId(t.getTaskId())
-                .collectionId(t.getCollection().getCollectionId())
-                .title(t.getTitle())
-                .link(t.getLink())
-                .memo(t.getMemo())
-                .status(t.getStatus())
-                .inout(t.getInout())
-                .createdAt(t.getCreatedAt())
-                .build());
+        List<TaskResponse> taskResponses = taskSlice.getContent().stream()
+                .map(t -> TaskResponse.builder()
+                        .taskId(t.getTaskId())
+                        .collectionId(t.getCollection().getCollectionId())
+                        .title(t.getTitle())
+                        .link(t.getLink())
+                        .memo(t.getMemo())
+                        .status(t.getStatus())
+                        .inout(t.getInout())
+                        .createdAt(t.getCreatedAt())
+                        .build())
+                .toList();
 
-        // 6. 결과 반환
+        // 6. 결과 반환 (hasNext()로 더 많은 결과가 있는지 확인)
         return SearchResponse.builder()
                 .collections(collectionResponses)
                 .tasks(taskResponses)
+                .hasMoreCollections(collectionSlice.hasNext())
+                .hasMoreTasks(taskSlice.hasNext())
                 .build();
     }
 
