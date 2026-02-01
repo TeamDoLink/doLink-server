@@ -2,6 +2,7 @@ package com.doLink_server.domain.task.repository;
 
 import com.doLink_server.domain.task.entity.Task;
 
+import com.doLink_server.user.entity.Users;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -61,4 +62,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * 모음별 Task 전체 조회 (페이징, 무한 스크롤)
      */
     Slice<Task> findAllByCollection_CollectionId(Long collectionId, Pageable pageable);
+
+    /**
+     * [검색용] 사용자별 할 일 제목 포함 검색 (페이징)
+     */
+    Slice<Task> findByUserAndTitleContaining(Users user, String keyword, Pageable pageable);
 }
