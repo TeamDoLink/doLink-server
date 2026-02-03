@@ -11,6 +11,7 @@ import com.doLink_server.domain.task.entity.Task;
 import com.doLink_server.domain.task.repository.TaskRepository;
 import com.doLink_server.global.common.status.ErrorStatus;
 import com.doLink_server.global.exception.GeneralException;
+import com.doLink_server.infra.s3.S3PresignedUrlProvider;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class TaskService {
     private final AuthService authService;
     private final UserService userService;
     private final LinkCreateService linkCreateService;
+    private final S3PresignedUrlProvider s3PresignedUrlProvider;
 
     /**
      * 할 일 추가
@@ -202,12 +204,18 @@ public class TaskService {
     }
 
     private TaskResponse toResponse(Task t) {
+        String thumbnailUrl = null;
+        if (t.getThumbnailKey() != null && !t.getThumbnailKey().isBlank()) {
+            thumbnailUrl = s3PresignedUrlProvider.presignGetUrl(t.getThumbnailKey());
+        }
+
         return TaskResponse.builder()
                 .taskId(t.getTaskId())
                 .collectionId(t.getCollection().getCollectionId())
                 .title(t.getTitle())
                 .link(t.getLink())
                 .memo(t.getMemo())
+                .thumbnailUrl(thumbnailUrl)
                 .status(t.getStatus())
                 .inout(t.getInout())
                 .createdAt(t.getCreatedAt())
