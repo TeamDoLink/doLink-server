@@ -74,9 +74,13 @@ dependencies {
 	implementation 'org.jsoup:jsoup:1.17.2' // OG
 	implementation 'net.coobird:thumbnailator:0.4.20' // 썸네일
 
-
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// 배포를 위한 추가
+jar {
+	enabled = false
 }
