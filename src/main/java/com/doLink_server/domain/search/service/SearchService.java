@@ -64,9 +64,11 @@ public class SearchService {
                     .map(Collection::getCollectionId)
                     .toList();
 
+            // 6. 여러 모음에 대해 모음별 대표 썸네일 최대 4개를 한 번에 조회
             List<CollectionThumbnailRow> thumbnailRows =
                     taskRepository.findTop4ThumbnailsByCollectionIds(collectionIds);
 
+            // 7. 컬렉션 ID별 썸네일 키 매핑
             Map<Long, List<String>> thumbKeyMap = thumbnailRows.stream()
                     .collect(Collectors.groupingBy(
                             CollectionThumbnailRow::getCollectionId,
@@ -76,6 +78,7 @@ public class SearchService {
                             )
                     ));
 
+            // 8. DTO 변환
             collectionResponses = collections.stream()
                     .map(c -> {
                         List<String> thumbnailUrls = thumbKeyMap

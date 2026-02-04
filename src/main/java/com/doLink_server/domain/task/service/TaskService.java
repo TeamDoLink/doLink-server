@@ -103,7 +103,7 @@ public class TaskService {
     /**
      * 모음별 Task 전체 조회 (페이징)
      */
-    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size, String sort) {
+    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size, String sort, Boolean completed) {
         String currentUserId = authService.getAuthenticatedUserId();
         Users user = userService.findExistingUser(currentUserId);
 
@@ -117,11 +117,25 @@ public class TaskService {
 
         Sort.Direction direction = "asc".equalsIgnoreCase(sort) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        // 정렬: Task ID 기준 내림차순 (최신순)
+        // 정렬: Task ID 기준
         PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, "taskId"));
 
-        return taskRepository.findAllByCollection_CollectionId(collectionId, pageable)
+        if (completed == null) {
+            return taskRepository.findAllByCollection_CollectionId(collectionId, pageable)
+                    .map(this::toResponse);
+        }
+
+        // completed=true -> status=true(완료), completed=false -> status=false(미완료)
+        return taskRepository.findAllByCollection_CollectionIdAndStatus(collectionId, completed, pageable)
                 .map(this::toResponse);
+    }
+
+    /**
+     * 모음별 Task 전체 조회 (페이징)
+     * - 하위 호환용 오버로드 (필터 없음)
+     */
+    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size, String sort) {
+        return listByCollection(collectionId, page, size, sort, null);
     }
 
     /**

@@ -42,7 +42,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
 
     /**
      * 로그아웃 요청 처리 메서드
-
+     * <p>
      * 요청 URI와 HTTP 메서드를 확인하여 로그아웃 API 요청인지 판단합니다.
      * 로그아웃 요청인 경우, 쿠키에서 refresh 토큰을 추출하고 유효성 검증을 수행합니다.
      * Redis에 저장된 토큰과 일치하는지 확인 후 로그아웃 처리(토큰 삭제, 쿠키 만료 설정)를 진행합니다.
@@ -67,13 +67,13 @@ public class CustomLogoutFilter extends GenericFilterBean {
         }
 
         // 2. 쿠키에서 refresh 토큰 추출
-        try{
+        try {
             Cookie[] cookies = request.getCookies();
             String refreshToken = jwtIssueService.getRefreshTokenFromCookie(cookies);
 
             // Redis에 저장된 refresh 토큰 확인
             String userId = jwtProvider.getUserId(refreshToken);
-            if(redisService.isInvalidRefreshToken(userId, refreshToken)){
+            if (redisService.isInvalidRefreshToken(userId, refreshToken)) {
                 log.error("Redis에 저장된 RefreshToken과 불일치");
                 throw new GeneralException(ErrorStatus.TOKEN_INVALIDATE_ERROR);
             }
