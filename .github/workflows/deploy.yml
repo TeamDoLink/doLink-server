@@ -1,0 +1,76 @@
+name: Deploy to Amazon EC2
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET_NAME: dolink-codedeploy-prod-ap-northeast-2
+  CODE_DEPLOY_APPLICATION_NAME: dolink
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: dolink_CodeDeploy
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # environment: production # 특정 환경 설정이 없다면 일단 주석 처리해도 무방합니다.
+
+    steps:
+    # (1) 기본 체크아웃
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    # (2) application.yml 설정
+    - name: Set application.yml
+      run: |
+        mkdir -p ./src/main/resources
+        echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+        
+    # (3) gradlew 권한 추가
+    - name: Run chmod to make gradlew executable
+      run: chmod +x ./gradlew
+
+    # (4) JDK 17 세팅 (Java 17 사용 중이시므로)
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # (5) Gradle build
+    - name: Build with Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        arguments: clean build -x test
+
+    # (6) AWS 인증
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # (7) 빌드 결과물 업로드
+    # tip: 프로젝트 루트에 appspec.yml과 scripts 폴더가 있어야 합니다.
+    - name: Upload to AWS S3
+      run: |
+        aws deploy push \
+          --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+          --ignore-hidden-files \
+          --s3-location s3://$S3_BUCKET_NAME/$GITHUB_SHA.zip \
+          --source .
+
+    # (8) Deploy 실행
+    - name: Deploy to AWS EC2 from S3
+      run: |
+        aws deploy create-deployment \
+          --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+          --deployment-config-name CodeDeployDefault.AllAtOnce \
+          --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+          --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
