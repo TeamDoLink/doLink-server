@@ -1,0 +1,28 @@
+# appspec.yml
+# AWS CodeDeploy가 빌드된 파일을 서버 내 /home/ubuntu/app 경로로 복사하도록 지정합니다.
+# 복사된 모든 파일의 소유권과 권한을 ubuntu 사용자로 설정하여 실행 권한을 보장합니다.
+# 배포 전후 단계(Hooks)에서 stop.sh와 start.sh 스크립트를 실행하여 애플리케이션을 재시작합니다.
+
+version: 0.0
+os: linux
+
+files:
+  - source:  /
+    destination: /home/ubuntu/app
+    overwrite: yes
+
+permissions:
+  - object: /
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+
+hooks:
+  AfterInstall:
+    - location: scripts/stop.sh
+      timeout: 60
+      runas: ubuntu
+  ApplicationStart:
+    - location: scripts/start.sh
+      timeout: 60
+      runas: ubuntu

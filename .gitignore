@@ -66,6 +66,9 @@ out/
 **/*.yaml
 *.env
 
+# appspec.yml은 예외적으로 허용 (AWS CodeDeploy 동작하는데 필요)
+!appspec.yml
+
 ### DS_Store ###
 .DS_Store
 
