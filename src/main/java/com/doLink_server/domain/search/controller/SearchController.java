@@ -27,13 +27,13 @@ public class SearchController {
      * 초기 검색 (모음, 할 일 각각 최대 5개씩)
      * GET /api/v1/search/preview?keyword=검색어
      */
-    @GetMapping("/preview")
-    @Operation(summary = "초기 검색 미리보기", description = "키워드가 포함된 모음과 할 일을 각각 최대 5개씩 조회한다.")
-    public ApiResponse<SearchResponse> searchPreview(
-            @Parameter(description = "검색어") @RequestParam String keyword
-    ) {
-        return ApiResponse.onSuccess(searchService.searchPreview(keyword));
-    }
+//    @GetMapping("/preview")
+//    @Operation(summary = "초기 검색 미리보기", description = "키워드가 포함된 모음과 할 일을 각각 최대 5개씩 조회한다.")
+//    public ApiResponse<SearchResponse> searchPreview(
+//            @Parameter(description = "검색어") @RequestParam String keyword
+//    ) {
+//        return ApiResponse.onSuccess(searchService.searchPreview(keyword));
+//    }
 
     /**
      * 모음 검색 (이름에 키워드 포함)

@@ -11,6 +11,7 @@ public record TaskResponse(
         String title,
         String link,
         String memo,
+        String thumbnailUrl,
         Boolean status,
         Boolean inout,
         LocalDateTime createdAt

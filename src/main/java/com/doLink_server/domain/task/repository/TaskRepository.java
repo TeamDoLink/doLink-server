@@ -64,6 +64,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Slice<Task> findAllByCollection_CollectionId(Long collectionId, Pageable pageable);
 
     /**
+     * 모음별 Task 전체 조회 (페이징, 무한 스크롤) + 완료/미완료 필터
+     *
+     * @param status true: 완료, false: 미완료
+     */
+    Slice<Task> findAllByCollection_CollectionIdAndStatus(Long collectionId, Boolean status, Pageable pageable);
+
+    /**
      * [검색용] 사용자별 할 일 제목 포함 검색 (페이징)
      */
     Slice<Task> findByUserAndTitleContaining(Users user, String keyword, Pageable pageable);

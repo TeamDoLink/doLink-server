@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/task")
@@ -32,15 +30,6 @@ public class TaskController {
     }
 
     /**
-     * 모음별 Task 전체 조회, 페이지네이션으로 마이그레이션 필요!!
-     */
-//    @GetMapping("/collections/{collectionId}")
-//    @Operation(summary = "모음별 Task 전체 조회", description = "collectionId에 속한 Task를 전부 조회한다.")
-//    public ApiResponse<List<TaskResponse>> listByCollection(@PathVariable Long collectionId) {
-//        return ApiResponse.onSuccess(taskService.listByCollection(collectionId));
-//    }
-
-    /**
      * 모음별 Task 전체 조회 (페이징, 무한 스크롤)
      */
     @GetMapping("/collections/{collectionId}")
@@ -49,9 +38,10 @@ public class TaskController {
             @PathVariable Long collectionId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "desc") String sort
+            @RequestParam(defaultValue = "desc") String sort,
+            @RequestParam(required = false) Boolean completed
     ) {
-        return ApiResponse.onSuccess(taskService.listByCollection(collectionId, page, size, sort));
+        return ApiResponse.onSuccess(taskService.listByCollection(collectionId, page, size, sort, completed));
     }
 
     /**
@@ -73,6 +63,15 @@ public class TaskController {
             @RequestBody TaskUpdateRequest request
     ) {
         return ApiResponse.onSuccess(taskService.updateTask(taskId, request));
+    }
+
+    /**
+     * 할 일 완료 처리
+     */
+    @PatchMapping("/{taskId}/complete")
+    @Operation(summary = "할 일 완료 처리", description = "할 일의 상태를 완료(true)로 변경한다.")
+    public ApiResponse<TaskResponse> completeTask(@PathVariable Long taskId) {
+        return ApiResponse.onSuccess(taskService.completeTask(taskId));
     }
 
     /**
