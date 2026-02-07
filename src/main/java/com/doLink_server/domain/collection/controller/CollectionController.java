@@ -1,6 +1,7 @@
 package com.doLink_server.domain.collection.controller;
 
 import com.doLink_server.domain.collection.dto.CollectionCreateRequest;
+import com.doLink_server.domain.collection.dto.CollectionDetailResponse;
 import com.doLink_server.domain.collection.dto.CollectionResponse;
 import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
@@ -102,18 +103,16 @@ public class CollectionController {
         return ApiResponse.onSuccess(collectionService.listCollectOptions());
     }
 
-//
-//    /**
-//     * 모음 상세 조회
-//     */
-//    @GetMapping("/{collectId}")
-//    @Operation(summary = "모음 상세 조회", description = "collectId에 해당하는 모음 상세 정보를 조회한다.")
-//    public ApiResponse<CollectionResponse> get(
-//            @PathVariable Long collectId
-//    ) {
-//        byte[] userId = getCurrentUserId(); // TODO: Security에서 가져오기
-//        return ApiResponse.onSuccess(collectionService.get(userId, collectId));
-//    }
-//
+    /**
+     * 모음 상세 조회
+     * - 모음의 제목, 카테고리 및 최근 tasks(limit 기본 3)를 조회한다.
+     */
+    @GetMapping("/{collectId}")
+    @Operation(summary = "모음 상세 조회", description = "collectId에 해당하는 모음 상세 정보를 조회한다. 최근 tasks는 기본 3개를 반환한다.")
+    public ApiResponse<CollectionDetailResponse> getCollectDetail(
+            @PathVariable Long collectId
+    ) {
+        return ApiResponse.onSuccess(collectionService.getCollectDetail(collectId));
+    }
 
 }

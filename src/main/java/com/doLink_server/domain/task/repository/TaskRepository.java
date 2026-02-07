@@ -73,6 +73,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Slice<Task> findAllByCollection_CollectionIdAndStatus(Long collectionId, Boolean status, Pageable pageable);
 
     /**
+     * 모음별 전체 할 일 개수 조회
+     */
+    long countByCollection_CollectionId(Long collectionId);
+
+    /**
      * [검색용] 사용자별 할 일 제목 포함 검색 (페이징)
      */
     Slice<Task> findByUserAndTitleContaining(Users user, String keyword, Pageable pageable);

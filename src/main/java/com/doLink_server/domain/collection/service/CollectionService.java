@@ -2,6 +2,7 @@ package com.doLink_server.domain.collection.service;
 
 import com.doLink_server.auth.service.AuthService;
 import com.doLink_server.domain.collection.dto.CollectionCreateRequest;
+import com.doLink_server.domain.collection.dto.CollectionDetailResponse;
 import com.doLink_server.domain.collection.dto.CollectionResponse;
 import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -269,5 +271,38 @@ public class CollectionService {
                         .name(c.getName())
                         .build())
                 .toList();
+    }
+
+    /**
+     * 모음 상세 조회 (모음의 제목, 카테고리 및 최근 tasks)
+     *
+     * @param collectionId 모음 ID
+     * @return CollectionDetailResponse
+     */
+    @Transactional(readOnly = true)
+    public CollectionDetailResponse getCollectDetail(Long collectionId) {
+        // 1) 로그인 유저 조회
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        // 2) 모음 조회 + user fetch join (없으면 404)
+        Collection collection = collectionRepository.findByIdWithUser(collectionId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
+
+        // 3) 권한 확인 - 남의 모음이면 403
+        if (!collection.getUser().getUserId().equals(user.getUserId())) {
+            throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
+        }
+
+        // 5) 해당 모음의 총 할 일 개수 조회
+        long totalCount = taskRepository.countByCollection_CollectionId(collectionId);
+
+        // 6) CollectionDetailResponse에는 최근 tasks 없이 총 개수만 반환
+        return CollectionDetailResponse.builder()
+                .collectionId(collection.getCollectionId())
+                .name(collection.getName())
+                .category(collection.getCategory())
+                .taskCount((int) totalCount)
+                .build();
     }
 }
