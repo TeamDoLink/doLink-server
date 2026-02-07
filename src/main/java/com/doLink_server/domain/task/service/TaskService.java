@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -131,11 +132,33 @@ public class TaskService {
     }
 
     /**
-     * 모음별 Task 전체 조회 (페이징)
-     * - 하위 호환용 오버로드 (필터 없음)
+     * 사용자별 전체 할 일 조회 (페이징)
+     * - 모든 모음의 할 일을 최신순으로 조회
      */
-    public Slice<TaskResponse> listByCollection(Long collectionId, int page, int size, String sort) {
-        return listByCollection(collectionId, page, size, sort, null);
+    public Slice<TaskResponse> listAll(int page, int size) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        PageRequest pageable = PageRequest.of(page, size);
+
+        return taskRepository.findAllByUser(user, pageable)
+                .map(this::toResponse);
+    }
+
+    /**
+     * 사용자별 최근 할 일 조회 (limit 개수 제한)
+     * - 최신순으로 limit 개수만큼 조회
+     */
+    public List<TaskResponse> listRecent(int limit) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        PageRequest pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        return taskRepository.findRecentTasksByUser(user, pageable)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     /**
@@ -154,7 +177,20 @@ public class TaskService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
 
-        task.updateElements(request.title(), request.memo(), request.status(), request.inout());
+        // 모음 변경 로직
+        if (request.collectionId() != null && !request.collectionId().equals(task.getCollection().getCollectionId())) {
+            Collection newCollection = collectionRepository.findByIdWithUser(request.collectionId())
+                    .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
+
+            // 새로운 모음도 내 모음인지 확인
+            if (!Arrays.equals(newCollection.getUser().getUserId(), user.getUserId())) {
+                throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+            }
+
+            task.setCollection(newCollection);
+        }
+
+        task.updateElements(request.title(), request.memo());
 
         // 링크 수정 로직
         if (request.link() != null) {
@@ -174,7 +210,9 @@ public class TaskService {
     }
 
     /**
-     * 할 일 완료 처리
+     * 할 일 완료 상태 토글
+     * - 완료(true) -> 미완료(false)
+     * - 미완료(false) -> 완료(true)
      */
     @Transactional
     public TaskResponse completeTask(Long taskId) {
@@ -189,12 +227,8 @@ public class TaskService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
 
-        // 이미 완료인 경우 그냥 현재 상태 반환
-        if (Boolean.TRUE.equals(task.getStatus())) {
-            return toResponse(task);
-        }
-
-        task.setStatus(true);
+        // 상태 토글
+        task.toggleStatus();
 
         return toResponse(task);
     }

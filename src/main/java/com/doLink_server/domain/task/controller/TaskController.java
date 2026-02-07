@@ -45,6 +45,29 @@ public class TaskController {
     }
 
     /**
+     * 전체 할 일 조회 (페이징, 무한 스크롤)
+     */
+    @GetMapping
+    @Operation(summary = "전체 할 일 조회", description = "로그인한 사용자의 모든 할 일을 최신순으로 페이징(무한 스크롤)하여 조회한다.")
+    public ApiResponse<Slice<TaskResponse>> listAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.onSuccess(taskService.listAll(page, size));
+    }
+
+    /**
+     * 최근 할 일 조회 (limit 개수 제한)
+     */
+    @GetMapping("/recent")
+    @Operation(summary = "최근 할 일 조회", description = "로그인한 사용자의 최근 할 일을 limit 개수만큼 조회한다.")
+    public ApiResponse<java.util.List<TaskResponse>> listRecent(
+            @RequestParam(defaultValue = "3") int limit
+    ) {
+        return ApiResponse.onSuccess(taskService.listRecent(limit));
+    }
+
+    /**
      * 할 일 단건 조회
      */
     @GetMapping("/{taskId}")
@@ -66,10 +89,10 @@ public class TaskController {
     }
 
     /**
-     * 할 일 완료 처리
+     * 할 일 상태 토글
      */
-    @PatchMapping("/{taskId}/complete")
-    @Operation(summary = "할 일 완료 처리", description = "할 일의 상태를 완료(true)로 변경한다.")
+    @PatchMapping("/{taskId}/toggle")
+    @Operation(summary = "할 일 상태 토글", description = "할 일의 상태를 토글한다. (완료 ↔ 미완료)")
     public ApiResponse<TaskResponse> completeTask(@PathVariable Long taskId) {
         return ApiResponse.onSuccess(taskService.completeTask(taskId));
     }
