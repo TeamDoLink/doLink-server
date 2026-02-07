@@ -1,9 +1,8 @@
 package com.doLink_server.domain.task.dto;
 
 public record TaskUpdateRequest(
+        Long collectionId, // 모음 ID
         String title,
         String link,
-        String memo,
-        Boolean status, // 완료 여부
-        Boolean inout   // 내부/외부 여부
+        String memo
 ) {}

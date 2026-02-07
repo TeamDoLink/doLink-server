@@ -1,8 +1,10 @@
 package com.doLink_server.domain.task.repository;
 
+import aj.org.objectweb.asm.commons.Remapper;
 import com.doLink_server.domain.task.entity.Task;
 
 import com.doLink_server.user.entity.Users;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -74,4 +76,23 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * [검색용] 사용자별 할 일 제목 포함 검색 (페이징)
      */
     Slice<Task> findByUserAndTitleContaining(Users user, String keyword, Pageable pageable);
+
+    /**
+     * 사용자별 전체 할 일 조회 (페이징, 무한 스크롤)
+     */
+    Slice<Task> findAllByUser(Users user, Pageable pageable);
+
+    /**
+     * 사용자별 전체 할 일 조회 (페이징, 무한 스크롤) + 완료/미완료 필터
+     *
+     * @param status true: 완료, false: 미완료
+     */
+    Slice<Task> findAllByUserAndStatus(Users user, Boolean status, Pageable pageable);
+
+    /**
+     * 사용자별 최근 할 일 조회 (limit 개수 제한)
+     * - 최신순으로 limit 개수만큼 조회
+     */
+    @Query("SELECT t FROM Task t JOIN FETCH t.collection c WHERE t.user = :user ORDER BY t.createdAt DESC")
+    List<Task> findRecentTasksByUser(@Param("user") Users user, Pageable pageable);
 }

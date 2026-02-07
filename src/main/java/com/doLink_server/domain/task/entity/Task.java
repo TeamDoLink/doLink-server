@@ -98,18 +98,12 @@ public class Task extends BaseEntity {
      * 기본 정보 수정 메서드
      * - 값이 null이 아닐 때만 변경 (PATCH 방식)
      */
-    public void updateElements(String title, String memo, Boolean status, Boolean inout) {
+    public void updateElements(String title, String memo) {
         if (title != null && !title.isBlank()) {
             this.title = title;
         }
         if (memo != null) {
             this.memo = memo;
-        }
-        if (status != null) {
-            this.status = status;
-        }
-        if (inout != null) {
-            this.inout = inout;
         }
     }
 
@@ -121,5 +115,14 @@ public class Task extends BaseEntity {
         this.link = link;
         this.ogImageKey = ogImageKey;
         this.thumbnailKey = thumbnailKey;
+    }
+
+    /**
+     * 완료 상태 토글 메서드
+     * - 완료(true) -> 미완료(false)
+     * - 미완료(false) -> 완료(true)
+     */
+    public void toggleStatus() {
+        this.status = !Boolean.TRUE.equals(this.status);
     }
 }
