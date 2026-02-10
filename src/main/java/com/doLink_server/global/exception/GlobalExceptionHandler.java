@@ -26,6 +26,7 @@ public class GlobalExceptionHandler {
                 ErrorStatus._BAD_REQUEST.getCode(),
                 "잘못된 요청 파라미터입니다."
         );
+        e.printStackTrace();
         return ResponseEntity.badRequest().body(response);
     }
 
@@ -37,20 +38,20 @@ public class GlobalExceptionHandler {
                 .code(ErrorStatus._BAD_REQUEST.getCode())
                 .message(e.getMessage())
                 .build();
-
+        e.printStackTrace();
         ApiResponse<Void> response = ApiResponse.onFailure(reason.code(), reason.message());
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException() {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         ReasonDTO reason = ReasonDTO.builder()
                 .httpStatus(HttpStatus.INTERNAL_SERVER_ERROR)
                 .isSuccess(false)
                 .code(ErrorStatus._INTERNAL_SERVER_ERROR.getCode())
                 .message(ErrorStatus._INTERNAL_SERVER_ERROR.getMessage())
                 .build();
-
+        e.printStackTrace();
         ApiResponse<Void> response = ApiResponse.onFailure(reason.code(), reason.message());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
@@ -59,6 +60,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(GeneralException e) {
         ReasonDTO reason = e.getErrorReasonHttpStatus();
 
+        e.printStackTrace();
         ApiResponse<Void> response = ApiResponse.onFailure(reason.code(), reason.message());
         return ResponseEntity.status(reason.httpStatus()).body(response);
     }

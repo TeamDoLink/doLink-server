@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
@@ -27,21 +28,21 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * - thumbnail_key 있는 Task만 대상으로 함
      */
     @Query(value = """
-        SELECT collection_id AS collectionId, thumbnail_key AS thumbnailKey
-        FROM (
-            SELECT
-                t.collection_id,
-                t.thumbnail_key,
-                ROW_NUMBER() OVER (
-                    PARTITION BY t.collection_id
-                    ORDER BY t.created_at DESC
-                ) rn
-            FROM dolink.task t
-            WHERE t.collection_id IN (:collectionIds)
-              AND t.thumbnail_key IS NOT NULL
-        ) x
-        WHERE rn <= 4
-        """, nativeQuery = true)
+            SELECT collection_id AS collectionId, thumbnail_key AS thumbnailKey
+            FROM (
+                SELECT
+                    t.collection_id,
+                    t.thumbnail_key,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY t.collection_id
+                        ORDER BY t.created_at DESC
+                    ) rn
+                FROM dolink.task t
+                WHERE t.collection_id IN (:collectionIds)
+                  AND t.thumbnail_key IS NOT NULL
+            ) x
+            WHERE rn <= 4
+            """, nativeQuery = true)
     List<CollectionThumbnailRow> findTop4ThumbnailsByCollectionIds(
             @Param("collectionIds") List<Long> collectionIds
     );
@@ -100,4 +101,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     @Query("SELECT t FROM Task t JOIN FETCH t.collection c WHERE t.user = :user ORDER BY t.createdAt DESC")
     List<Task> findRecentTasksByUser(@Param("user") Users user, Pageable pageable);
+
+    /**
+     * 모음 ID 리스트별 할 일 개수 조회
+     */
+    @Query(value = """
+            SELECT t.collection_id AS collectionId, COUNT(*) AS taskCount
+            FROM dolink.task t
+            WHERE t.collection_id IN (:collectionIds)
+            GROUP BY t.collection_id
+            """, nativeQuery = true)
+    List<CollectionTaskCountRow> countByCollectionIds(@Param("collectionIds") List<Long> collectionIds);
 }

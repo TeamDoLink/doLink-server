@@ -7,7 +7,8 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record CollectionDetailResponse(
+public record
+CollectionDetailResponse(
         Long collectionId,
         String name,
         Category category,

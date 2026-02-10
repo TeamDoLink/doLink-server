@@ -1,6 +1,8 @@
 package com.doLink_server.domain.collection.service;
 
 import com.doLink_server.auth.service.AuthService;
+import com.doLink_server.domain.collection.dto.CollectionCategoryCountResponse;
+import com.doLink_server.domain.collection.dto.CollectionCountResponse;
 import com.doLink_server.domain.collection.dto.CollectionCreateRequest;
 import com.doLink_server.domain.collection.dto.CollectionDetailResponse;
 import com.doLink_server.domain.collection.dto.CollectionResponse;
@@ -8,8 +10,7 @@ import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
 import com.doLink_server.domain.collection.entity.Collection;
 import com.doLink_server.domain.collection.repository.CollectionRepository;
-
-
+import com.doLink_server.domain.task.repository.CollectionTaskCountRow;
 import com.doLink_server.domain.task.repository.CollectionThumbnailRow;
 import com.doLink_server.domain.task.repository.TaskRepository;
 import com.doLink_server.global.common.status.ErrorStatus;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -79,7 +81,15 @@ public class CollectionService {
                         )
                 ));
 
-        // 4) presigned URL 변환 + DTO 생성
+        // 4) 모음별 할 일 개수 조회
+        List<CollectionTaskCountRow> countRows = taskRepository.countByCollectionIds(collectionIds);
+        Map<Long, Long> taskCountMap = countRows.stream()
+                .collect(Collectors.toMap(
+                        CollectionTaskCountRow::getCollectionId,
+                        CollectionTaskCountRow::getTaskCount
+                ));
+
+        // 5) presigned URL 변환 + DTO 생성
         List<CollectionResponse> responses = collections.stream()
                 .map(c -> {
                     List<String> thumbnailUrls = thumbKeyMap
@@ -88,11 +98,14 @@ public class CollectionService {
                             .map(presignedUrlProvider::presignGetUrl)
                             .toList();
 
+                    int taskCount = taskCountMap.getOrDefault(c.getCollectionId(), 0L).intValue();
+
                     return CollectionResponse.builder()
                             .collectionId(c.getCollectionId())
                             .name(c.getName())
                             .category(c.getCategory())
                             .thumbnails(thumbnailUrls)
+                            .taskCount(taskCount)
                             .build();
                 })
                 .toList();
@@ -135,7 +148,15 @@ public class CollectionService {
                         )
                 ));
 
-        // 4) presigned URL 변환 + DTO 생성
+        // 4) 모음별 할 일 개수 조회
+        List<CollectionTaskCountRow> countRows = taskRepository.countByCollectionIds(collectionIds);
+        Map<Long, Long> taskCountMap = countRows.stream()
+                .collect(Collectors.toMap(
+                        CollectionTaskCountRow::getCollectionId,
+                        CollectionTaskCountRow::getTaskCount
+                ));
+
+        // 5) presigned URL 변환 + DTO 생성
         List<CollectionResponse> responses = collections.stream()
                 .map(c -> {
                     List<String> thumbnailUrls = thumbKeyMap
@@ -144,11 +165,14 @@ public class CollectionService {
                             .map(presignedUrlProvider::presignGetUrl)
                             .toList();
 
+                    int taskCount = taskCountMap.getOrDefault(c.getCollectionId(), 0L).intValue();
+
                     return CollectionResponse.builder()
                             .collectionId(c.getCollectionId())
                             .name(c.getName())
                             .category(c.getCategory())
                             .thumbnails(thumbnailUrls)
+                            .taskCount(taskCount)
                             .build();
                 })
                 .toList();
@@ -184,6 +208,7 @@ public class CollectionService {
                 .name(saved.getName())                 // 모음 이름
                 .category(saved.getCategory())         // 모음 카테고리
                 .thumbnails(List.of())                 // 썸네일 목록(할 일 기능 이후 채움)
+                .taskCount(0)                          // 새 모음은 할 일 없음
                 .build();
     }
 
@@ -216,7 +241,7 @@ public class CollectionService {
 
     /**
      * 모음 수정
-     *
+     * <p>
      * - 로그인 사용자의 모음만 수정 가능
      * - 수정 항목: name, category
      *
@@ -250,12 +275,13 @@ public class CollectionService {
                 .name(collection.getName())
                 .category(collection.getCategory())
                 .thumbnails(List.of()) // TODO: Task 썸네일 완성되면 채우기
+                .taskCount(0) // TODO: Task 개수 계산 필요 시 추가
                 .build();
     }
 
     /**
      * 할 일 추가 화면용 모음 선택 목록 조회
-     *
+     * <p>
      * - 로그인한 사용자가 보유한 모음 전체 조회
      * 사용처: 할 일 추가 화면 > "담을 모음 선택"
      */
@@ -304,5 +330,98 @@ public class CollectionService {
                 .category(collection.getCategory())
                 .taskCount((int) totalCount)
                 .build();
+    }
+
+    /**
+     * 최근 N개 모음 조회 (페이징 없이, 최신 생성 순)
+     * - 기본 사용: 최근 8개 조회
+     */
+    @Transactional(readOnly = true)
+    public List<CollectionResponse> listTopRecentCollections(int limit) {
+        Users user = getLoginUser();
+        // 0번째 페이지에 limit 크기의 요청을 만들어 최신 생성순으로 조회
+        PageRequest pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Slice<Collection> slice = collectionRepository.findAllByUserOrderByCreatedAtDesc(user, pageable);
+        List<Collection> collections = slice.getContent();
+        if (collections.isEmpty()) {
+            return List.of();
+        }
+
+        // 1) 모음 ID 수집
+        List<Long> collectionIds = collections.stream()
+                .map(Collection::getCollectionId)
+                .toList();
+
+        // 2) 모음별 썸네일 key를 한 번에 조회 (모음당 최대 4개)
+        List<CollectionThumbnailRow> rows =
+                taskRepository.findTop4ThumbnailsByCollectionIds(collectionIds);
+
+        // 3) collectionId -> thumbnailKey 리스트로 그룹핑
+        Map<Long, List<String>> thumbKeyMap = rows.stream()
+                .collect(Collectors.groupingBy(
+                        CollectionThumbnailRow::getCollectionId,
+                        Collectors.mapping(
+                                CollectionThumbnailRow::getThumbnailKey,
+                                Collectors.toList()
+                        )
+                ));
+
+        // 4) 모음별 할 일 개수 조회
+        List<CollectionTaskCountRow> countRows = taskRepository.countByCollectionIds(collectionIds);
+        Map<Long, Long> taskCountMap = countRows.stream()
+                .collect(Collectors.toMap(
+                        CollectionTaskCountRow::getCollectionId,
+                        CollectionTaskCountRow::getTaskCount
+                ));
+
+        // 5) presigned URL 변환 + DTO 생성
+        List<CollectionResponse> responses = collections.stream()
+                .map(c -> {
+                    List<String> thumbnailUrls = thumbKeyMap
+                            .getOrDefault(c.getCollectionId(), List.of())
+                            .stream()
+                            .map(presignedUrlProvider::presignGetUrl)
+                            .toList();
+
+                    int taskCount = taskCountMap.getOrDefault(c.getCollectionId(), 0L).intValue();
+
+                    return CollectionResponse.builder()
+                            .collectionId(c.getCollectionId())
+                            .name(c.getName())
+                            .category(c.getCategory())
+                            .thumbnails(thumbnailUrls)
+                            .taskCount(taskCount)
+                            .build();
+                })
+                .toList();
+
+        return responses;
+    }
+
+    /**
+     * 전체 모음 개수 조회
+     */
+    public CollectionCountResponse getTotalCollectionCount() {
+        Long count = collectionRepository.count();
+        return CollectionCountResponse.builder()
+                .count(count)
+                .build();
+    }
+
+    /**
+     * 카테고리별 모음 개수 조회
+     */
+    public List<CollectionCategoryCountResponse> getCategoryCounts() {
+        Users user = getLoginUser();
+        return Arrays.stream(Category.values())
+                .map(category -> {
+                    long count = collectionRepository.countByUserAndCategory(user, category);
+                    return CollectionCategoryCountResponse.builder()
+                            .categoryKorean(category.getLabelKorean())
+                            .count(count)
+                            .build();
+                })
+                .toList();
     }
 }
