@@ -1,6 +1,8 @@
 package com.doLink_server.domain.collection.controller;
 
 import com.doLink_server.domain.collection.dto.CollectionCreateRequest;
+import com.doLink_server.domain.collection.dto.CollectionCountResponse;
+import com.doLink_server.domain.collection.dto.CollectionCategoryCountResponse;
 import com.doLink_server.domain.collection.dto.CollectionDetailResponse;
 import com.doLink_server.domain.collection.dto.CollectionResponse;
 import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
@@ -105,14 +107,42 @@ public class CollectionController {
 
     /**
      * 모음 상세 조회
-     * - 모음의 제목, 카테고리 및 최근 tasks(limit 기본 3)를 조회한다.
+     * - 모음의 제목, 카테고리 및 할 일 개수를 조회한다.
      */
     @GetMapping("/{collectId}")
-    @Operation(summary = "모음 상세 조회", description = "collectId에 해당하는 모음 상세 정보를 조회한다. 최근 tasks는 기본 3개를 반환한다.")
+    @Operation(summary = "모음 상세 조회", description = "collectId에 해당하는 모음 상세 정보를 조회한다. 모음의 제목, 카테고리 및 할 일 개수를 조회한다.")
     public ApiResponse<CollectionDetailResponse> getCollectDetail(
             @PathVariable Long collectId
     ) {
         return ApiResponse.onSuccess(collectionService.getCollectDetail(collectId));
+    }
+
+    /**
+     * 최근 8개 모음 조회
+     * - 페이징 없이 로그인 사용자의 최신 생성 순으로 최대 8개의 모음을 반환
+     */
+    @GetMapping("/top8")
+    @Operation(summary = "최근 8개 모음 조회", description = "로그인 사용자의 최근 생성된 모음 8개를 조회한다.")
+    public ApiResponse<List<CollectionResponse>> listTop8() {
+        return ApiResponse.onSuccess(collectionService.listTopRecentCollections(8));
+    }
+
+    /**
+     * 전체 모음 개수 조회
+     */
+    @GetMapping("/count")
+    @Operation(summary = "전체 모음 개수 조회", description = "로그인 사용자의 전체 모음 개수를 조회한다.")
+    public ApiResponse<CollectionCountResponse> getTotalCollectionCount() {
+        return ApiResponse.onSuccess(collectionService.getTotalCollectionCount());
+    }
+
+    /**
+     * 카테고리별 모음 개수 조회
+     */
+    @GetMapping("/category-counts")
+    @Operation(summary = "카테고리별 모음 개수 조회", description = "로그인 사용자의 카테고리별 모음 개수를 조회한다.")
+    public ApiResponse<List<CollectionCategoryCountResponse>> getCategoryCounts() {
+        return ApiResponse.onSuccess(collectionService.getCategoryCounts());
     }
 
 }
