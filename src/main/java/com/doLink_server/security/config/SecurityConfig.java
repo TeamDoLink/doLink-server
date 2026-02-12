@@ -11,6 +11,7 @@ import com.doLink_server.security.filter.JwtAuthenticationFilter;
 import com.doLink_server.security.jwt.JwtProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.web.cors.CorsConfiguration;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -83,6 +85,16 @@ public class SecurityConfig {
                 .userInfoEndpoint(userInfoEndpointConfig
                         -> userInfoEndpointConfig.userService(customOAuth2UserService))
         );
+
+        http.cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(List.of("http://localhost:3000"));
+                    config.setAllowedMethods(List.of("*"));
+                    config.setAllowedHeaders(List.of("*"));
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
+                .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
