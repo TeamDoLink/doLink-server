@@ -16,6 +16,7 @@ public record TaskCreateRequest(
         String title,
 
         String link,
-        String memo
+        String memo,
+        Boolean inout
 ) {
 }

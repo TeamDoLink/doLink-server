@@ -76,7 +76,7 @@ public class TaskService {
                         .memo(request.memo())
                         .ogImageKey(ogImageKey)
                         .thumbnailKey(thumbnailKey)
-                        .inout(true)
+                        .inout(request.inout())
                         .status(false)
                         .isTutorial(false)
                         .build()
@@ -196,7 +196,7 @@ public class TaskService {
             task.setCollection(newCollection);
         }
 
-        task.updateElements(request.title(), request.memo());
+        task.updateElements(request.title(), request.memo(), request.inout());
 
         // 링크 수정 로직
         if (request.link() != null) {
