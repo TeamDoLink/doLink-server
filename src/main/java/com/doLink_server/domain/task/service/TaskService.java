@@ -257,16 +257,46 @@ public class TaskService {
             thumbnailUrl = s3PresignedUrlProvider.presignGetUrl(t.getThumbnailKey());
         }
 
+        String domain = extractDomain(t.getLink());
+
         return TaskResponse.builder()
                 .taskId(t.getTaskId())
                 .collectionId(t.getCollection().getCollectionId())
                 .title(t.getTitle())
                 .link(t.getLink())
                 .memo(t.getMemo())
+                .domain(domain)
                 .thumbnailUrl(thumbnailUrl)
                 .status(t.getStatus())
                 .inout(t.getInout())
                 .createdAt(t.getCreatedAt())
                 .build();
+    }
+
+    private String extractDomain(String link) {
+        if (link == null || link.isBlank()) {
+            return null;
+        }
+        try {
+            java.net.URI uri = new java.net.URI(link);
+            String host = uri.getHost();
+            if (host == null) {
+                return null;
+            }
+            // www. 제거
+            if (host.startsWith("www.")) {
+                host = host.substring(4);
+            }
+            // 매핑
+            return switch (host) {
+                case "notion.so" -> "노션 (Notion)";
+                case "instagram.com" -> "인스타그램 (Instagram)";
+                case "youtube.com" -> "유튜브 (YouTube)";
+                // 다른 도메인 추가 가능
+                default -> "기타";
+            };
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

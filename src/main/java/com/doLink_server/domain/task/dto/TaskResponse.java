@@ -1,19 +1,21 @@
 package com.doLink_server.domain.task.dto;
 
 import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Builder
-public record TaskResponse(
-        Long taskId,
-        Long collectionId,
-        String title,
-        String link,
-        String memo,
-        String thumbnailUrl,
-        Boolean status,
-        Boolean inout,
-        LocalDateTime createdAt
-) {
+@Getter
+public class TaskResponse {
+    private Long taskId;
+    private Long collectionId;
+    private String title;
+    private String link;
+    private String memo;
+    private String domain;
+    private String thumbnailUrl;
+    private Boolean status;
+    private Boolean inout;
+    private LocalDateTime createdAt;
 }
