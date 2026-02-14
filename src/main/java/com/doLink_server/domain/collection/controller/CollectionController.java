@@ -8,6 +8,7 @@ import com.doLink_server.domain.collection.dto.CollectionResponse;
 import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
 import com.doLink_server.domain.collection.service.CollectionService;
+import com.doLink_server.domain.task.dto.MostTasksCategoryResponse;
 import com.doLink_server.global.common.ApiResponse;
 import com.doLink_server.global.enums.Category;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,6 +144,15 @@ public class CollectionController {
     @Operation(summary = "카테고리별 모음 개수 조회", description = "로그인 사용자의 카테고리별 모음 개수를 조회한다.")
     public ApiResponse<List<CollectionCategoryCountResponse>> getCategoryCounts() {
         return ApiResponse.onSuccess(collectionService.getCategoryCounts());
+    }
+
+    /**
+     * 할 일이 가장 많은 모음의 카테고리 조회
+     */
+    @GetMapping("/most-tasks-category")
+    @Operation(summary = "할 일이 가장 많은 모음의 카테고리 조회", description = "로그인 사용자의 모음 중 할 일이 가장 많은 모음의 카테고리를 한국어로 반환한다.")
+    public ApiResponse<MostTasksCategoryResponse> getMostTasksCategory() {
+        return ApiResponse.onSuccess(collectionService.getMostTasksCategory());
     }
 
 }

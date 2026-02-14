@@ -10,6 +10,7 @@ import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
 import com.doLink_server.domain.collection.entity.Collection;
 import com.doLink_server.domain.collection.repository.CollectionRepository;
+import com.doLink_server.domain.task.dto.MostTasksCategoryResponse;
 import com.doLink_server.domain.task.repository.CollectionTaskCountRow;
 import com.doLink_server.domain.task.repository.CollectionThumbnailRow;
 import com.doLink_server.domain.task.repository.TaskRepository;
@@ -19,6 +20,8 @@ import com.doLink_server.global.exception.GeneralException;
 import com.doLink_server.infra.s3.S3PresignedUrlProvider;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.service.UserService;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -28,8 +31,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -423,5 +428,46 @@ public class CollectionService {
                             .build();
                 })
                 .toList();
+    }
+
+    /**
+     * 할 일이 가장 많은 모음의 카테고리 조회
+     */
+    public MostTasksCategoryResponse getMostTasksCategory() {
+        Users user = getLoginUser();
+
+        List<Collection> collections = collectionRepository.findAllByUser(user);
+        if (collections.isEmpty()) {
+            return MostTasksCategoryResponse.builder()
+                    .categoryKorean(Category.ETC.getLabelKorean())
+                    .taskCount(0)
+                    .build();
+        }
+
+        List<Long> collectionIds = collections.stream()
+                .map(Collection::getCollectionId)
+                .toList();
+
+        List<CollectionTaskCountRow> countRows = taskRepository.countByCollectionIds(collectionIds);
+        if (countRows.isEmpty()) {
+            return MostTasksCategoryResponse.builder()
+                    .categoryKorean(Category.ETC.getLabelKorean())
+                    .taskCount(0)
+                    .build();
+        }
+
+        Optional<CollectionTaskCountRow> maxRow = countRows.stream()
+                .max(Comparator.comparing(CollectionTaskCountRow::getTaskCount));
+
+        Long maxCollectionId = maxRow.get().getCollectionId();
+        Collection maxCollection = collections.stream()
+                .filter(c -> c.getCollectionId().equals(maxCollectionId))
+                .findFirst()
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
+
+        return MostTasksCategoryResponse.builder()
+                .categoryKorean(maxCollection.getCategory().getLabelKorean())
+                .taskCount(maxRow.get().getTaskCount())
+                .build();
     }
 }
