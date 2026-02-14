@@ -13,5 +13,7 @@ public record LinkCreateResult(
         String originalUrl,
         String thumbnailKey,
         String thumbnailUrl
-) {}
+) {
+
+}
 
