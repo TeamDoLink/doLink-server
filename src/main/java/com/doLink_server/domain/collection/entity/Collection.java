@@ -49,6 +49,12 @@ public class Collection extends BaseEntity {
     private Category category;
 
     /**
+     * 튜토리얼 여부
+     */
+    @Column(name = "is_tutorial")
+    private Boolean isTutorial;
+
+    /**
      * 사용자 (Users 1 : Collection N)
      */
     @NotNull

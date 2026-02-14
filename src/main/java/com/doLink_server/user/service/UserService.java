@@ -1,8 +1,13 @@
 package com.doLink_server.user.service;
 
 import com.doLink_server.auth.oauth.model.OAuth2UserInfo;
+import com.doLink_server.domain.collection.entity.Collection;
+import com.doLink_server.domain.collection.repository.CollectionRepository;
+import com.doLink_server.domain.task.entity.Task;
+import com.doLink_server.domain.task.repository.TaskRepository;
 import com.doLink_server.global.common.status.ErrorStatus;
 import com.doLink_server.global.exception.GeneralException;
+import com.doLink_server.global.enums.Category;
 import com.doLink_server.global.util.UUIDToBytesUtil;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.repository.UsersRepository;
@@ -15,9 +20,13 @@ import java.util.UUID;
 public class UserService {
 
     private final UsersRepository usersRepository;
+    private final CollectionRepository collectionRepository;
+    private final TaskRepository taskRepository;
 
-    public UserService(UsersRepository usersRepository) {
+    public UserService(UsersRepository usersRepository, CollectionRepository collectionRepository, TaskRepository taskRepository) {
         this.usersRepository = usersRepository;
+        this.collectionRepository = collectionRepository;
+        this.taskRepository = taskRepository;
     }
 
     /**
@@ -62,7 +71,35 @@ public class UserService {
                 .modifiedAt(LocalDateTime.now())
                 .build();
         usersRepository.save(user);
+
+        // 튜토리얼 데이터 생성
+        createTutorialData(user);
+
         return user;
+    }
+
+    private void createTutorialData(Users user) {
+        // 모음 생성
+        Collection tutorialCollection = Collection.builder()
+                .user(user)
+                .name("두링크(DoLink) 튜토리얼")
+                .category(Category.ETC)
+                .isTutorial(true)
+                .build();
+        collectionRepository.save(tutorialCollection);
+
+        // 할 일 생성
+        Task tutorialTask = Task.builder()
+                .user(user)
+                .collection(tutorialCollection)
+                .title("두링크(DoLink) 안내서 📚")
+                .link("https://www.notion.so/DoLink-30347f96a7fc8039ae52e566e4c26087?v=25547f96a7fc80b5bce8000c0b3385bb&source=copy_link")
+                .memo(null)
+                .status(false) // 미완료
+                .inout(true)
+                .isTutorial(true)
+                .build();
+        taskRepository.save(tutorialTask);
     }
 
     /**
