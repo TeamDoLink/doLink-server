@@ -18,4 +18,5 @@ public class TaskResponse {
     private Boolean status;
     private Boolean inout;
     private LocalDateTime createdAt;
+    private Boolean isTutorial;
 }

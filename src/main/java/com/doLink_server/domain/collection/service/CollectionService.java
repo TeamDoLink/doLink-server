@@ -21,8 +21,6 @@ import com.doLink_server.global.exception.GeneralException;
 import com.doLink_server.infra.s3.S3PresignedUrlProvider;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.service.UserService;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -112,6 +110,7 @@ public class CollectionService {
                             .category(c.getCategory())
                             .thumbnails(thumbnailUrls)
                             .taskCount(taskCount)
+                            .isTutorial(c.getIsTutorial())
                             .build();
                 })
                 .toList();
@@ -179,6 +178,7 @@ public class CollectionService {
                             .category(c.getCategory())
                             .thumbnails(thumbnailUrls)
                             .taskCount(taskCount)
+                            .isTutorial(c.getIsTutorial())
                             .build();
                 })
                 .toList();
@@ -216,6 +216,7 @@ public class CollectionService {
                 .category(saved.getCategory())         // 모음 카테고리
                 .thumbnails(List.of())                 // 썸네일 목록(할 일 기능 이후 채움)
                 .taskCount(0)                          // 새 모음은 할 일 없음
+                .isTutorial(saved.getIsTutorial())
                 .build();
     }
 
@@ -293,6 +294,7 @@ public class CollectionService {
                 .category(collection.getCategory())
                 .thumbnails(List.of()) // TODO: Task 썸네일 완성되면 채우기
                 .taskCount(0) // TODO: Task 개수 계산 필요 시 추가
+                .isTutorial(collection.getIsTutorial())
                 .build();
     }
 
@@ -409,6 +411,7 @@ public class CollectionService {
                             .category(c.getCategory())
                             .thumbnails(thumbnailUrls)
                             .taskCount(taskCount)
+                            .isTutorial(c.getIsTutorial())
                             .build();
                 })
                 .toList();

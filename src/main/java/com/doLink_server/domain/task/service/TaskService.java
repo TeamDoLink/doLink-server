@@ -281,6 +281,7 @@ public class TaskService {
                 .status(t.getStatus())
                 .inout(t.getInout())
                 .createdAt(t.getCreatedAt())
+                .isTutorial(t.getIsTutorial())
                 .build();
     }
 
