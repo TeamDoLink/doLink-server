@@ -78,6 +78,7 @@ public class TaskService {
                         .thumbnailKey(thumbnailKey)
                         .inout(true)
                         .status(false)
+                        .isTutorial(false)
                         .build()
         );
 
@@ -177,6 +178,11 @@ public class TaskService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
 
+        // 튜토리얼은 수정 불가능
+        if (Boolean.TRUE.equals(task.getIsTutorial())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
         // 모음 변경 로직
         if (request.collectionId() != null && !request.collectionId().equals(task.getCollection().getCollectionId())) {
             Collection newCollection = collectionRepository.findByIdWithUser(request.collectionId())
@@ -245,6 +251,11 @@ public class TaskService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
 
         if (!Arrays.equals(task.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        // 튜토리얼은 삭제 불가능
+        if (Boolean.TRUE.equals(task.getIsTutorial())) {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
 

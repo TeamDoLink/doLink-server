@@ -84,6 +84,7 @@ public class UserService {
                 .user(user)
                 .name("두링크(DoLink) 튜토리얼")
                 .category(Category.ETC)
+                .isTutorial(true)
                 .build();
         collectionRepository.save(tutorialCollection);
 
@@ -96,6 +97,7 @@ public class UserService {
                 .memo(null)
                 .status(false) // 미완료
                 .inout(true)
+                .isTutorial(true)
                 .build();
         taskRepository.save(tutorialTask);
     }

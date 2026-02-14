@@ -206,6 +206,7 @@ public class CollectionService {
                         .user(user)
                         .name(request.name())
                         .category(request.category())
+                        .isTutorial(false)
                         .build()
         );
 
@@ -240,6 +241,11 @@ public class CollectionService {
             throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
         }
 
+        // 튜토리얼은 삭제 불가능
+        if (Boolean.TRUE.equals(collection.getIsTutorial())) {
+            throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
+        }
+
         // 4) 삭제
         // CASCADE라 하위 Task도 함께 삭제됨
         collectionRepository.delete(collection);
@@ -268,6 +274,11 @@ public class CollectionService {
 
         // 3) 권한 체크 (내 모음인지)
         if (!collection.getUser().getUserId().equals(user.getUserId())) {
+            throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
+        }
+
+        // 튜토리얼은 수정 불가능
+        if (Boolean.TRUE.equals(collection.getIsTutorial())) {
             throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
         }
 

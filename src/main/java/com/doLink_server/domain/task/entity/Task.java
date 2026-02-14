@@ -95,6 +95,12 @@ public class Task extends BaseEntity {
     private Boolean inout;
 
     /**
+     * 튜토리얼 여부
+     */
+    @Column(name = "is_tutorial")
+    private Boolean isTutorial;
+
+    /**
      * 기본 정보 수정 메서드
      * - 값이 null이 아닐 때만 변경 (PATCH 방식)
      */
