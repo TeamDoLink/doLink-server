@@ -7,6 +7,7 @@ import com.doLink_server.domain.collection.dto.CollectionCreateRequest;
 import com.doLink_server.domain.collection.dto.CollectionDetailResponse;
 import com.doLink_server.domain.collection.dto.CollectionResponse;
 import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
+import com.doLink_server.domain.collection.dto.CollectionTaskCountResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
 import com.doLink_server.domain.collection.entity.Collection;
 import com.doLink_server.domain.collection.repository.CollectionRepository;
@@ -469,5 +470,36 @@ public class CollectionService {
                 .categoryKorean(maxCollection.getCategory().getLabelKorean())
                 .taskCount(maxRow.get().getTaskCount())
                 .build();
+    }
+
+    /**
+     * 각 모음의 할 일 전체 개수 조회
+     */
+    public List<CollectionTaskCountResponse> getTaskCountsForCollections() {
+        Users user = getLoginUser();
+
+        List<Collection> collections = collectionRepository.findAllByUser(user);
+        if (collections.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> collectionIds = collections.stream()
+                .map(Collection::getCollectionId)
+                .toList();
+
+        List<CollectionTaskCountRow> countRows = taskRepository.countByCollectionIds(collectionIds);
+
+        Map<Long, Long> taskCountMap = countRows.stream()
+                .collect(Collectors.toMap(
+                        CollectionTaskCountRow::getCollectionId,
+                        CollectionTaskCountRow::getTaskCount
+                ));
+
+        return collections.stream()
+                .map(c -> CollectionTaskCountResponse.builder()
+                        .collectionId(c.getCollectionId())
+                        .taskCount(taskCountMap.getOrDefault(c.getCollectionId(), 0L))
+                        .build())
+                .toList();
     }
 }

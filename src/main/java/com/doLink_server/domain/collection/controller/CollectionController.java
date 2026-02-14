@@ -6,6 +6,7 @@ import com.doLink_server.domain.collection.dto.CollectionCategoryCountResponse;
 import com.doLink_server.domain.collection.dto.CollectionDetailResponse;
 import com.doLink_server.domain.collection.dto.CollectionResponse;
 import com.doLink_server.domain.collection.dto.CollectionSimpleResponse;
+import com.doLink_server.domain.collection.dto.CollectionTaskCountResponse;
 import com.doLink_server.domain.collection.dto.CollectionUpdateRequest;
 import com.doLink_server.domain.collection.service.CollectionService;
 import com.doLink_server.domain.task.dto.MostTasksCategoryResponse;
@@ -153,6 +154,15 @@ public class CollectionController {
     @Operation(summary = "할 일이 가장 많은 모음의 카테고리 조회", description = "로그인 사용자의 모음 중 할 일이 가장 많은 모음의 카테고리를 한국어로 반환한다.")
     public ApiResponse<MostTasksCategoryResponse> getMostTasksCategory() {
         return ApiResponse.onSuccess(collectionService.getMostTasksCategory());
+    }
+
+    /**
+     * 각 모음의 할 일 전체 개수 조회
+     */
+    @GetMapping("/task-counts")
+    @Operation(summary = "각 모음의 할 일 전체 개수 조회", description = "로그인 사용자의 각 모음에 속한 할 일의 전체 개수를 조회한다.")
+    public ApiResponse<List<CollectionTaskCountResponse>> getTaskCountsForCollections() {
+        return ApiResponse.onSuccess(collectionService.getTaskCountsForCollections());
     }
 
 }
