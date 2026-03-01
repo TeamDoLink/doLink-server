@@ -30,6 +30,15 @@ jobs:
       run: |
         mkdir -p ./src/main/resources
         echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+
+      # (2) application.yml 및 application-dev.yml 설정
+    - name: Set application config files
+      run: |
+        mkdir -p ./src/main/resources
+        # 공통 설정 파일 생성
+        echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+        # DB 정보가 포함된 dev용 설정 파일 생성
+        echo "${{ secrets.APPLICATION_DEV }}" > ./src/main/resources/application-dev.yml
         
     # (3) gradlew 권한 추가
     - name: Run chmod to make gradlew executable
