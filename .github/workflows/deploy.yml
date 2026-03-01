@@ -66,7 +66,7 @@ jobs:
           --s3-location s3://$S3_BUCKET_NAME/$GITHUB_SHA.zip \
           --source .
 
-    # (8) Deploy 실행
+      # (8) Deploy 실행
     - name: Deploy to AWS EC2 from S3
       run: |
         aws deploy create-deployment \
@@ -74,3 +74,31 @@ jobs:
           --deployment-config-name CodeDeployDefault.AllAtOnce \
           --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
           --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
+
+      # (9) 배포 성공 시 알림
+    - name: Discord Success Notification
+      if: success() # 이전 모든 단계가 성공했을 때만 실행
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+        status: success
+        content: "🚀 **doLink-server** 배포 성공!"
+        title: "✅ Develop 브랜치 배포가 완료되었습니다."
+        description: |
+          **Commit Message:** ${{ github.event.head_commit.message }}
+          **Pushed by:** ${{ github.actor }}
+        color: 0x00ff00 # 초록색
+
+      # (10) 배포 실패 시 알림
+    - name: Discord Failure Notification
+      if: failure() # 단계 중 하나라도 실패하면 실행
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+        status: failure
+        content: "⚠️ **doLink-server** 배포 실패!"
+        title: "🚨 배포 과정에서 에러가 발생했습니다."
+        description: |
+          **실패한 커밋:** ${{ github.event.head_commit.message }}
+          워크플로우 로그를 확인해 주세요.
+        color: 0xff0000 # 빨간색
