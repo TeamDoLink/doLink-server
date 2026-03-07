@@ -61,43 +61,25 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
             return;
         }
 
-        // 2. 클라이언트가 가진 refreshToken 쿠키에서 읽기
-        String clientRefreshToken = extractRefreshTokenFromCookie(request);
-        if (clientRefreshToken == null) {
-            log.info("▶ 클라이언트 refreshToken 없음");
-        }
+//        // 2. 클라이언트가 가진 refreshToken 쿠키에서 읽기
+//        String clientRefreshToken = extractRefreshTokenFromCookie(request);
+//        if (clientRefreshToken == null) {
+//            log.info("▶ 클라이언트 refreshToken 없음");
+//        }
+//
+//        // 3. Redis에 저장된 refreshToken 조회
+//        String redisRefreshToken = redisService.getRefreshToken(userId);
+//        if (redisRefreshToken == null) {
+//            log.info("▶ Redis에 refreshToken 없음");
+//        }
 
-        // 3. Redis에 저장된 refreshToken 조회
-        String redisRefreshToken = redisService.getRefreshToken(userId);
-        if (redisRefreshToken == null) {
-            log.info("▶ Redis에 refreshToken 없음");
-        }
+        // 4. 토큰 검증 및 발급 로직
+        // 기존 토큰이 있는지, 유효한지 따지지 않고 새로 발급합니다.
+        String finalRefreshToken = jwtIssueService.issueRefreshToken(userId);
 
-        // 4. 토큰 검증 로직
-        String finalRefreshToken;
-        if (clientRefreshToken == null || redisRefreshToken == null) {
-            // 토큰 중 하나라도 없으면 새 토큰 발급
-            finalRefreshToken = jwtIssueService.issueRefreshToken(userId);
-            redisService.saveRefreshToken(userId, finalRefreshToken);
-            log.info("▶ 새 refreshToken 발급 및 Redis에 저장 : {}", finalRefreshToken);
-        } else if (!redisRefreshToken.equals(clientRefreshToken)) {
-            // 토큰 불일치
-            log.info("▶ Redis 토큰과 클라이언트 토큰 불일치");
-            logTokenDetails("Redis 저장 토큰", redisRefreshToken);
-            logTokenDetails("클라이언트 토큰", clientRefreshToken);
-            finalRefreshToken = jwtIssueService.issueRefreshToken(userId);
-        } else {
-            // 토큰 일치 -> 유효성 검사
-            boolean isValid = jwtProvider.validateToken(clientRefreshToken);
-            log.info("▶ JWT 유효성 검사 결과: {}", isValid);
-            if (isValid) {
-                finalRefreshToken = clientRefreshToken;
-                log.info("▶ 기존 refreshToken 유효 — 재사용");
-            } else {
-                log.info("▶ 토큰 유효하지 않음, 새 토큰 발급");
-                finalRefreshToken = jwtIssueService.issueRefreshToken(userId);
-            }
-        }
+        // 5. Redis 저장 (기존 키가 있으면 알아서 Overwrite 됩니다)
+        redisService.saveRefreshToken(userId, finalRefreshToken);
+        log.info("▶ [로그인 성공] 새 refreshToken 발급 및 Redis 갱신 완료. UserId: {}", userId);
 
         // 5. HttpOnly, Secure 옵션 적용한 쿠키에 refreshToken 세팅
         // accessToken은 쿠키에 담지 않고, 필요하다면 이후 API 요청으로 전달받도록 구성
@@ -119,7 +101,6 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         response.sendRedirect(redirectUrl);
 
         log.info("▶ OAuth2 인증 성공 후 리다이렉트: {}", redirectUrl);
-
     }
 
 
