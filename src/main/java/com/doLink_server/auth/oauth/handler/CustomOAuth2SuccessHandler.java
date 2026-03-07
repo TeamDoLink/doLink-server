@@ -61,17 +61,17 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
             return;
         }
 
-        // 2. 클라이언트가 가진 refreshToken 쿠키에서 읽기
-        String clientRefreshToken = extractRefreshTokenFromCookie(request);
-        if (clientRefreshToken == null) {
-            log.info("▶ 클라이언트 refreshToken 없음");
-        }
-
-        // 3. Redis에 저장된 refreshToken 조회
-        String redisRefreshToken = redisService.getRefreshToken(userId);
-        if (redisRefreshToken == null) {
-            log.info("▶ Redis에 refreshToken 없음");
-        }
+//        // 2. 클라이언트가 가진 refreshToken 쿠키에서 읽기
+//        String clientRefreshToken = extractRefreshTokenFromCookie(request);
+//        if (clientRefreshToken == null) {
+//            log.info("▶ 클라이언트 refreshToken 없음");
+//        }
+//
+//        // 3. Redis에 저장된 refreshToken 조회
+//        String redisRefreshToken = redisService.getRefreshToken(userId);
+//        if (redisRefreshToken == null) {
+//            log.info("▶ Redis에 refreshToken 없음");
+//        }
 
         // 4. 토큰 검증 및 발급 로직
         // 기존 토큰이 있는지, 유효한지 따지지 않고 새로 발급합니다.
