@@ -295,16 +295,54 @@ public class TaskService {
             if (host == null) {
                 return null;
             }
+
+            host = host.toLowerCase();
+
             // www. 제거
             if (host.startsWith("www.")) {
                 host = host.substring(4);
             }
-            // 매핑
+
             return switch (host) {
-                case "notion.so" -> "노션 (Notion)";
+                // --- 소셜(SNS) ---
+                case "linkedin.com" -> "링크드인 (LinkedIn)";
+                case "threads.net" -> "스레드 (Threads)";
+                case "x.com", "t.co" -> "엑스 (X)";
                 case "instagram.com" -> "인스타그램 (Instagram)";
+                case "story.kakao.com" -> "카카오스토리 (KakaoStory)";
+                case "facebook.com" -> "페이스북 (Facebook)";
+
+                // --- 숏폼 ---
+                case "douyin.com" -> "더우인 (Douyin)";
+                case "tiktok.com" -> "틱톡 (TikTok)";
+
+                // --- 레퍼런스 ---
+                case "pinterest.com" -> "핀터레스트 (Pinterest)";
+
+                // --- 동영상/스트리밍 ---
+                case "tv.naver.com" -> "네이버 TV (NAVER TV)";
                 case "youtube.com" -> "유튜브 (YouTube)";
-                // 다른 도메인 추가 가능
+                case "chzzk.naver.com" -> "치지직 (CHZZK)";
+                case "twitch.tv" -> "트위치 (Twitch)";
+
+                // --- 커뮤니티/카페 ---
+                case "cafe.naver.com" -> "네이버 카페 (Naver Cafe)";
+                case "cafe.daum.net" -> "다음 카페 (Daum Cafe)";
+                case "band.us" -> "밴드 (BAND)";
+
+                // --- 개발/문서 ---
+                case "gitlab.com" -> "깃랩 (GitLab)";
+                case "github.com" -> "깃허브 (GitHub)";
+                case "stackoverflow.com" -> "스택오버플로 (Stack Overflow)";
+
+                // --- 뉴스 ---
+                case "news.google.com" -> "구글 뉴스 (Google News)";
+                case "news.naver.com" -> "네이버 뉴스 (Naver News)";
+                case "news.daum.net" -> "다음 뉴스 (Daum News)";
+
+                // --- 기존 ---
+                case "notion.so" -> "노션 (Notion)";
+
                 default -> "기타";
             };
         } catch (Exception e) {
