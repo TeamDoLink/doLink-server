@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -238,7 +237,7 @@ public class CollectionService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
 
         // 3) 권한 확인 - 남의 모음이면 403
-        if (!collection.getUser().getUserId().equals(user.getUserId())) {
+        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
             throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
         }
 
@@ -274,7 +273,7 @@ public class CollectionService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
 
         // 3) 권한 체크 (내 모음인지)
-        if (!collection.getUser().getUserId().equals(user.getUserId())) {
+        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
             throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
         }
 
@@ -335,7 +334,7 @@ public class CollectionService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
 
         // 3) 권한 확인 - 남의 모음이면 403
-        if (!collection.getUser().getUserId().equals(user.getUserId())) {
+        if (!Arrays.equals(collection.getUser().getUserId(), user.getUserId())) {
             throw new GeneralException(ErrorStatus._FORBIDDEN_COLLECTION);
         }
 
@@ -395,7 +394,8 @@ public class CollectionService {
                 ));
 
         // 5) presigned URL 변환 + DTO 생성
-        List<CollectionResponse> responses = collections.stream()
+
+        return collections.stream()
                 .map(c -> {
                     List<String> thumbnailUrls = thumbKeyMap
                             .getOrDefault(c.getCollectionId(), List.of())
@@ -415,8 +415,6 @@ public class CollectionService {
                             .build();
                 })
                 .toList();
-
-        return responses;
     }
 
     /**
@@ -447,6 +445,8 @@ public class CollectionService {
 
     /**
      * 할 일이 가장 많은 모음의 카테고리 조회
+     * - 카테고리별 할 일 합산 후, ETC(기타)는 -1 페널티를 적용하여 비교
+     * - 동점일 경우 ETC가 아닌 카테고리 우선, 그 외에는 먼저 등장한 카테고리 반환
      */
     public MostTasksCategoryResponse getMostTasksCategory() {
         Users user = getLoginUser();
@@ -471,18 +471,40 @@ public class CollectionService {
                     .build();
         }
 
-        Optional<CollectionTaskCountRow> maxRow = countRows.stream()
-                .max(Comparator.comparing(CollectionTaskCountRow::getTaskCount));
+        // collectionId -> Collection 맵
+        Map<Long, Collection> collectionMap = collections.stream()
+                .collect(Collectors.toMap(Collection::getCollectionId, c -> c));
 
-        Long maxCollectionId = maxRow.get().getCollectionId();
-        Collection maxCollection = collections.stream()
-                .filter(c -> c.getCollectionId().equals(maxCollectionId))
-                .findFirst()
-                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_COLLECTION));
+        // 카테고리별 실제 할 일 개수 합산
+        Map<Category, Long> categoryRealCountMap = new java.util.EnumMap<>(Category.class);
+        for (CollectionTaskCountRow row : countRows) {
+            Collection c = collectionMap.get(row.getCollectionId());
+            if (c == null) continue;
+            categoryRealCountMap.merge(c.getCategory(), row.getTaskCount(), Long::sum);
+        }
+
+        if (categoryRealCountMap.isEmpty()) {
+            return MostTasksCategoryResponse.builder()
+                    .categoryKorean(Category.ETC.getLabelKorean())
+                    .taskCount(0)
+                    .build();
+        }
+
+        // ETC는 -1 페널티를 적용한 점수로 비교 (반환하는 taskCount는 실제 개수)
+        Category bestCategory = categoryRealCountMap.entrySet().stream()
+                .max(Comparator.comparingLong((Map.Entry<Category, Long> e) -> {
+                    long score = e.getValue();
+                    if (e.getKey() == Category.ETC) score -= 1;
+                    return score;
+                }))
+                .map(Map.Entry::getKey)
+                .orElse(Category.ETC);
+
+        long realCount = categoryRealCountMap.getOrDefault(bestCategory, 0L);
 
         return MostTasksCategoryResponse.builder()
-                .categoryKorean(maxCollection.getCategory().getLabelKorean())
-                .taskCount(maxRow.get().getTaskCount())
+                .categoryKorean(bestCategory.getLabelKorean())
+                .taskCount(realCount)
                 .build();
     }
 
