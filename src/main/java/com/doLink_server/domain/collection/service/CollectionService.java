@@ -453,10 +453,7 @@ public class CollectionService {
 
         List<Collection> collections = collectionRepository.findAllByUser(user);
         if (collections.isEmpty()) {
-            return MostTasksCategoryResponse.builder()
-                    .categoryKorean(Category.ETC.getLabelKorean())
-                    .taskCount(0)
-                    .build();
+            return createZeroEtcResponse();
         }
 
         List<Long> collectionIds = collections.stream()
@@ -465,46 +462,56 @@ public class CollectionService {
 
         List<CollectionTaskCountRow> countRows = taskRepository.countByCollectionIds(collectionIds);
         if (countRows.isEmpty()) {
-            return MostTasksCategoryResponse.builder()
-                    .categoryKorean(Category.ETC.getLabelKorean())
-                    .taskCount(0)
-                    .build();
+            return createZeroEtcResponse();
         }
 
-        // collectionId -> Collection 맵
-        Map<Long, Collection> collectionMap = collections.stream()
-                .collect(Collectors.toMap(Collection::getCollectionId, c -> c));
+        // 1. 카테고리별 점수 합산 (ETC는 처음부터 -1 처리)
+        Map<Category, Long> categoryScoreMap = new java.util.EnumMap<>(Category.class);
 
-        // 카테고리별 실제 할 일 개수 합산
-        Map<Category, Long> categoryRealCountMap = new java.util.EnumMap<>(Category.class);
+        // 초기값 세팅 (ETC는 기본적으로 -1부터 시작하거나 나중에 뺌)
         for (CollectionTaskCountRow row : countRows) {
-            Collection c = collectionMap.get(row.getCollectionId());
+            Collection c = collectionRepository.findById(row.getCollectionId()).orElse(null);
             if (c == null) continue;
-            categoryRealCountMap.merge(c.getCategory(), row.getTaskCount(), Long::sum);
+            categoryScoreMap.merge(c.getCategory(), row.getTaskCount(), Long::sum);
         }
 
-        if (categoryRealCountMap.isEmpty()) {
-            return MostTasksCategoryResponse.builder()
-                    .categoryKorean(Category.ETC.getLabelKorean())
-                    .taskCount(0)
-                    .build();
+        // 2. ETC 카테고리의 값을 항상 -1 차감 (사용자 요구사항 반영)
+        categoryScoreMap.computeIfPresent(Category.ETC, (k, v) -> v - 1);
+
+        // 만약 ETC가 1개였는데 -1해서 0이 되었고, 다른 카테고리가 아예 없다면?
+        // 혹은 결과가 마이너스가 되는 것을 방지하려면 Math.max(0, v - 1) 사용 가능
+        if (categoryScoreMap.isEmpty()) {
+            return createZeroEtcResponse();
         }
 
-        // ETC는 -1 페널티를 적용한 점수로 비교 (반환하는 taskCount는 실제 개수)
-        Category bestCategory = categoryRealCountMap.entrySet().stream()
-                .max(Comparator.comparingLong((Map.Entry<Category, Long> e) -> {
-                    long score = e.getValue();
-                    if (e.getKey() == Category.ETC) score -= 1;
-                    return score;
-                }))
+        // 3. 최적화된 Max 탐색 (이미 점수에 페널티가 반영되어 있으므로 단순 비교)
+        Category bestCategory = categoryScoreMap.entrySet().stream()
+                .max((e1, e2) -> {
+                    int compare = Long.compare(e1.getValue(), e2.getValue());
+                    if (compare == 0) {
+                        // 점수 동점일 때 ETC는 후순위로 밀림
+                        if (e1.getKey() == Category.ETC) return -1;
+                        if (e2.getKey() == Category.ETC) return 1;
+                    }
+                    return compare;
+                })
                 .map(Map.Entry::getKey)
                 .orElse(Category.ETC);
 
-        long realCount = categoryRealCountMap.getOrDefault(bestCategory, 0L);
+        // 4. 이미 계산된(차감된) 점수를 그대로 반환
+        long finalCount = categoryScoreMap.getOrDefault(bestCategory, 0L);
 
         return MostTasksCategoryResponse.builder()
                 .categoryKorean(bestCategory.getLabelKorean())
-                .taskCount(realCount)
+                .taskCount(Math.max(0, finalCount)) // 음수 방지
+                .build();
+    }
+
+    // 중복 코드 공통화
+    private MostTasksCategoryResponse createZeroEtcResponse() {
+        return MostTasksCategoryResponse.builder()
+                .categoryKorean(Category.ETC.getLabelKorean())
+                .taskCount(0)
                 .build();
     }
 
