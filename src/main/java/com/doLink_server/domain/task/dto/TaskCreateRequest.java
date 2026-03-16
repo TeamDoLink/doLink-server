@@ -11,7 +11,7 @@ public record TaskCreateRequest(
         Long collectionId,
 
         /** 할 일 제목 */
-        @NotBlank(message = "제목은 필수입니다.")
+//        @NotBlank(message = "제목은 필수입니다.")
         @Size(max = 100, message = "제목은 최대 100자까지 가능합니다.")
         String title,
 
