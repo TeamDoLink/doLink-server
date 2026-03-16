@@ -55,7 +55,10 @@ public class TaskService {
             throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
         }
 
+
+
         // 4) 링크가 있으면 OG + 썸네일 처리
+        String finalTitle = request.title(); // 사용자가 직접 입력한 제목
         String ogImageKey = null;
         String thumbnailKey = null;
 
@@ -64,6 +67,11 @@ public class TaskService {
 
             ogImageKey = linkResult.originalKey();
             thumbnailKey = linkResult.thumbnailKey();
+
+            // 사용자가 제목을 입력하지 않았다면 OG 제목을 정제해서 사용
+            if (finalTitle == null || finalTitle.isBlank()) {
+                finalTitle = refineTitle(linkResult.title());
+            }
         }
 
         // 5) Task 저장 (thumbnailKey 포함)
@@ -71,7 +79,7 @@ public class TaskService {
                 Task.builder()
                         .user(user)
                         .collection(collection)
-                        .title(request.title())
+                        .title(finalTitle)
                         .link(request.link())
                         .memo(request.memo())
                         .ogImageKey(ogImageKey)
@@ -83,6 +91,23 @@ public class TaskService {
         );
 
         return toResponse(saved);
+    }
+
+    private String refineTitle(String rawTitle) {
+        if (rawTitle == null || rawTitle.isBlank()) return "제목 없음";
+
+        // 1) 줄바꿈 문자(\n, \r)를 공백으로 치환하거나 첫 줄만 가져오기
+        String refined = rawTitle.split("\n")[0];
+
+        // 2) 앞뒤 공백 제거 및 불필요한 따옴표 제거
+        refined = refined.replace("\"", "").replace("'", "").trim();
+
+        // 3) 너무 길면 적당히 자르기 (예: 50자)
+        if (refined.length() > 50) {
+            refined = refined.substring(0, 47) + "...";
+        }
+
+        return refined;
     }
 
     /**
@@ -156,7 +181,8 @@ public class TaskService {
 
         PageRequest pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        return taskRepository.findRecentTasksByUser(user, pageable)
+        // status 파라미터에 false를 넣어서 호출
+        return taskRepository.findByUserAndStatus(user, false, pageable)
                 .stream()
                 .map(this::toResponse)
                 .toList();
