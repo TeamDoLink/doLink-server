@@ -97,10 +97,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     /**
      * 사용자별 최근 할 일 조회 (limit 개수 제한)
-     * - 최신순으로 limit 개수만큼 조회
+     * - 최신순으로 완료되지 않은 것들중에 limit 개수만큼 조회
+     * find(찾다) + By(조건) + User(유저가) + And(그리고) + Status(상태가)
      */
-    @Query("SELECT t FROM Task t JOIN FETCH t.collection c WHERE t.user = :user ORDER BY t.createdAt DESC")
-    List<Task> findRecentTasksByUser(@Param("user") Users user, Pageable pageable);
+    List<Task> findByUserAndStatus(Users user, Boolean status, Pageable pageable);
 
     /**
      * 모음 ID 리스트별 할 일 개수 조회
