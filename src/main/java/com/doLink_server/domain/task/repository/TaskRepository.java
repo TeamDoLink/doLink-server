@@ -112,4 +112,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             GROUP BY t.collection_id
             """, nativeQuery = true)
     List<CollectionTaskCountRow> countByCollectionIds(@Param("collectionIds") List<Long> collectionIds);
+
+    @Query("SELECT t FROM Task t JOIN FETCH t.collection c WHERE t.shareToken = :token")
+    Optional<Task> findByShareToken(@Param("token") String token);
 }

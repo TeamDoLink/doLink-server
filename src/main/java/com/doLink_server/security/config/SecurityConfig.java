@@ -113,6 +113,9 @@ public class SecurityConfig {
             "/swagger-ui/**",
 
             // 프론트 jwt 개발배포환경
-            "/temp/login"
+            "/temp/login",
+
+            // 공유 API (인증 불필요)
+            "/api/v1/share/**"
     };
 }
