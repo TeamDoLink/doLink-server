@@ -421,7 +421,8 @@ public class CollectionService {
      * 전체 모음 개수 조회
      */
     public CollectionCountResponse getTotalCollectionCount() {
-        Long count = collectionRepository.count();
+        Users user = getLoginUser();
+        long count = collectionRepository.countByUser(user);
         return CollectionCountResponse.builder()
                 .count(count)
                 .build();

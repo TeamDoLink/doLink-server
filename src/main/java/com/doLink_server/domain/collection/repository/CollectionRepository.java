@@ -69,6 +69,11 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
     Slice<Collection> findByUserAndNameContaining(Users user, String keyword, Pageable pageable);
 
     /**
+     * 로그인한 사용자의 전체 모음 개수 조회
+     */
+    long countByUser(Users user);
+
+    /**
      * 로그인한 사용자의 카테고리별 모음 개수 조회
      */
     long countByUserAndCategory(Users user, Category category);
