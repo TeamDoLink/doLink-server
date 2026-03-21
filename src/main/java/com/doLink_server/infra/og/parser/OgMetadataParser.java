@@ -26,7 +26,7 @@ public class OgMetadataParser {
     public OgMetadata parse(String url) {
         try {
             Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (compatible; DoLinkBot/1.0)")
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .timeout(TIMEOUT_MS)
                     .followRedirects(true)
                     .ignoreHttpErrors(true)
