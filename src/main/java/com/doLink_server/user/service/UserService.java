@@ -96,7 +96,7 @@ public class UserService {
                 .link("https://www.notion.so/DoLink-30347f96a7fc8039ae52e566e4c26087?v=25547f96a7fc80b5bce8000c0b3385bb&source=copy_link")
                 .memo(null)
                 .status(false) // 미완료
-                .inout(true)
+                .inout(false)
                 .isTutorial(true)
                 .build();
         taskRepository.save(tutorialTask);
