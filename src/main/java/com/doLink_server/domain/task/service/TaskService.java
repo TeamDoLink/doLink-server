@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -309,6 +310,37 @@ public class TaskService {
                 .createdAt(t.getCreatedAt())
                 .isTutorial(t.getIsTutorial())
                 .build();
+    }
+
+    /**
+     * 공유 토큰 발급
+     */
+    @Transactional
+    public String createShareToken(Long taskId) {
+        String currentUserId = authService.getAuthenticatedUserId();
+        Users user = userService.findExistingUser(currentUserId);
+
+        Task task = taskRepository.findByIdWithUserAndCollection(taskId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+
+        if (!Arrays.equals(task.getUser().getUserId(), user.getUserId())) {
+            throw new GeneralException(ErrorStatus._UNAUTHORIZED_TASK);
+        }
+
+        if (task.getShareToken() == null) {
+            task.setShareToken(UUID.randomUUID().toString());
+        }
+
+        return task.getShareToken();
+    }
+
+    /**
+     * 공유 토큰으로 Task 조회 (인증 불필요)
+     */
+    public TaskResponse getSharedTask(String shareToken) {
+        Task task = taskRepository.findByShareToken(shareToken)
+                .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
+        return toResponse(task);
     }
 
     private String extractDomain(String link) {

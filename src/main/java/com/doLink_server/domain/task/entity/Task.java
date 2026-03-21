@@ -101,6 +101,12 @@ public class Task extends BaseEntity {
     private Boolean isTutorial;
 
     /**
+     * 공유 토큰 (null이면 비공개, 값이 있으면 공유 중)
+     */
+    @Column(name = "share_token", unique = true, length = 36)
+    private String shareToken;
+
+    /**
      * 기본 정보 수정 메서드
      * - 값이 null이 아닐 때만 변경 (PATCH 방식)
      */
