@@ -84,3 +84,6 @@ uploads/
 ### aws deploy 를 위한 예외 설정###
 !gradle/wrapper/gradle-wrapper.properties
 !gradle/wrapper/gradle-wrapper.jar
+
+# Kiro
+.kiro/
