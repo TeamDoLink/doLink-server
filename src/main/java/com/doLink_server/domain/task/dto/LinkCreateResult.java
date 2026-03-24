@@ -12,7 +12,8 @@ public record LinkCreateResult(
         String originalKey,
         String originalUrl,
         String thumbnailKey,
-        String thumbnailUrl
+        String thumbnailUrl,
+        boolean linkValid
 ) {
 
 }

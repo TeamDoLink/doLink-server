@@ -72,7 +72,8 @@ public class LinkCreateService {
                     originalKey,
                     originalUrl,
                     thumbnailKey,
-                    thumbnailUrl
+                    thumbnailUrl,
+                    og.linkValid()
             );
 
         } catch (Exception e) {
