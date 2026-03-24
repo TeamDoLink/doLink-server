@@ -61,6 +61,12 @@ public class Task extends BaseEntity {
     private String link;
 
     /**
+     * 링크 유효성 여부 (접속 가능 여부)
+     */
+    @Column(name = "link_valid")
+    private Boolean linkValid;
+
+    /**
      * OG 대표 썸네일 S3 key
      * - DB에는 URL이 아니라 key만 저장 (presigned는 조회 시 생성)
      */
@@ -126,10 +132,11 @@ public class Task extends BaseEntity {
      * 링크 및 OG 데이터 수정 메서드
      * - 링크 관련 정보는 세트로 움직이므로 별도 메서드로 분리
      */
-    public void updateLink(String link, String ogImageKey, String thumbnailKey) {
+    public void updateLink(String link, String ogImageKey, String thumbnailKey, Boolean linkValid) {
         this.link = link;
         this.ogImageKey = ogImageKey;
         this.thumbnailKey = thumbnailKey;
+        this.linkValid = linkValid;
     }
 
     /**

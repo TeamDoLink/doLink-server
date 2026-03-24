@@ -62,12 +62,14 @@ public class TaskService {
         String finalTitle = request.title(); // 사용자가 직접 입력한 제목
         String ogImageKey = null;
         String thumbnailKey = null;
+        Boolean linkValid = null;
 
         if (request.link() != null && !request.link().isBlank()) {
             LinkCreateResult linkResult = linkCreateService.create(request.link());
 
             ogImageKey = linkResult.originalKey();
             thumbnailKey = linkResult.thumbnailKey();
+            linkValid = linkResult.linkValid();
 
             // 사용자가 제목을 입력하지 않았다면 OG 제목을 정제해서 사용
             if (finalTitle == null || finalTitle.isBlank()) {
@@ -85,6 +87,7 @@ public class TaskService {
                         .memo(request.memo())
                         .ogImageKey(ogImageKey)
                         .thumbnailKey(thumbnailKey)
+                        .linkValid(linkValid)
                         .inout(request.inout())
                         .status(false)
                         .isTutorial(false)
@@ -231,11 +234,11 @@ public class TaskService {
 
             if (newLink.isBlank()) {
                 // 링크 삭제
-                task.updateLink(null, null, null);
+                task.updateLink(null, null, null, null);
             } else if (!newLink.equals(task.getLink())) {
                 // 링크 변경 (새로 파싱)
                 LinkCreateResult linkResult = linkCreateService.create(newLink);
-                task.updateLink(newLink, linkResult.originalKey(), linkResult.thumbnailKey());
+                task.updateLink(newLink, linkResult.originalKey(), linkResult.thumbnailKey(), linkResult.linkValid());
             }
         }
 
@@ -302,6 +305,7 @@ public class TaskService {
                 .collectionId(t.getCollection().getCollectionId())
                 .title(t.getTitle())
                 .link(t.getLink())
+                .linkValid(t.getLinkValid())
                 .memo(t.getMemo())
                 .domain(domain)
                 .thumbnailUrl(thumbnailUrl)

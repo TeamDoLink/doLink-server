@@ -12,6 +12,7 @@ public class TaskResponse {
     private Long collectionId;
     private String title;
     private String link;
+    private Boolean linkValid;
     private String memo;
     private String domain;
     private String thumbnailUrl;

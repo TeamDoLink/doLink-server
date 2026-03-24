@@ -25,12 +25,18 @@ public class OgMetadataParser {
      */
     public OgMetadata parse(String url) {
         try {
-            Document doc = Jsoup.connect(url)
+            org.jsoup.Connection.Response response = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .timeout(TIMEOUT_MS)
                     .followRedirects(true)
                     .ignoreHttpErrors(true)
-                    .get();
+                    .execute();
+
+            if (response.statusCode() >= 400) {
+                return OgMetadata.invalid();
+            }
+
+            Document doc = response.parse();
 
             // OG 메타데이터 우선 추출
             String ogTitle = meta(doc, "property", "og:title");
@@ -56,12 +62,12 @@ public class OgMetadataParser {
                     trimToNull(ogDesc),
                     trimToNull(ogImage),
                     trimToNull(ogSite),
-                    trimToNull(finalUrl)
+                    trimToNull(finalUrl),
+                    true
             );
 
         } catch (Exception e) {
-            // 파싱 실패 시에도 링크 저장 로직을 유지하기 위해 null 기반 결과 반환
-            return new OgMetadata(null, null, null, null, null);
+            return OgMetadata.invalid();
         }
     }
 
