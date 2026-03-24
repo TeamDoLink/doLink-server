@@ -72,6 +72,7 @@ dependencies {
 	// OG 메타데이터 분석 & 파싱 구현
 	implementation 'org.jsoup:jsoup:1.17.2' // OG
 	implementation 'net.coobird:thumbnailator:0.4.20' // 썸네일
+	implementation 'org.sejda.imageio:webp-imageio:0.1.6' // WebP 이미지 지원 (ImageIO)
 
 }
 
