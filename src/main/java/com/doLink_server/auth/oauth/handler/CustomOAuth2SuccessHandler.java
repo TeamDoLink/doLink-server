@@ -111,11 +111,14 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof DefaultOAuth2User defaultUser) {
-            Object idAttr = defaultUser.getAttribute("id");
+            // provider별 식별자 키가 다름 (kakao: "id", google: "sub")
+            String registrationId = (String) defaultUser.getAttribute("registrationId");
+            String idKey = "google".equals(registrationId) ? "sub" : "id";
+            Object idAttr = defaultUser.getAttribute(idKey);
             if (idAttr != null) {
                 return idAttr.toString();
             } else {
-                logAndSendError(response, "DefaultOAuth2User에 id 속성이 없습니다.");
+                logAndSendError(response, "DefaultOAuth2User에 " + idKey + " 속성이 없습니다.");
             }
         } else {
             logAndSendError(response, "지원하지 않는 principal 타입: " + principal.getClass());
