@@ -44,7 +44,7 @@ public class Users extends BaseEntity {
     /**
      * 소셜 로그인 제공 ID
      */
-    @Column(name = "social_id", nullable = false, length = 10)
+    @Column(name = "social_id", nullable = false, length = 50)
     private String socialId;
 
     /**

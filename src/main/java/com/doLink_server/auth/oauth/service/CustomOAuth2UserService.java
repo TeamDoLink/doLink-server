@@ -1,6 +1,7 @@
 package com.doLink_server.auth.oauth.service;
 
 
+import com.doLink_server.auth.oauth.model.GoogleUserInfo;
 import com.doLink_server.auth.oauth.model.KakaoUserInfo;
 import com.doLink_server.auth.oauth.model.OAuth2UserInfo;
 import com.doLink_server.global.exception.GeneralException;
@@ -46,6 +47,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Users user = findOrRegisterUser(userInfo);
 
         Map<String, Object> extendedAttributes = buildExtendedAttributes(attributes, user);
+        extendedAttributes.put("registrationId", registrationId);
         List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("ROLE_USER");
 
         return new DefaultOAuth2User(authorities, extendedAttributes, userNameAttributeName);
@@ -57,7 +59,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private OAuth2UserInfo createOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
         return switch (registrationId) {
             case "kakao" -> new KakaoUserInfo(attributes);
-            // todo 구글
+            case "google" -> new GoogleUserInfo(attributes);
             // todo 네이버
             default -> throw new OAuth2AuthenticationException("지원하지 않는 로그인 제공자입니다: " + registrationId);
         };
