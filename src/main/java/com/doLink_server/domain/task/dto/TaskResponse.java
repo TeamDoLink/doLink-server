@@ -20,4 +20,5 @@ public class TaskResponse {
     private Boolean inout;
     private LocalDateTime createdAt;
     private Boolean isTutorial;
+    private Boolean isOwner;
 }

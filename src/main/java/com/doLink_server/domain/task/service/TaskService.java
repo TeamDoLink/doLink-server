@@ -293,6 +293,10 @@ public class TaskService {
     }
 
     private TaskResponse toResponse(Task t) {
+        return toResponse(t, true);
+    }
+
+    private TaskResponse toResponse(Task t, boolean isOwner) {
         String thumbnailUrl = null;
         if (t.getThumbnailKey() != null && !t.getThumbnailKey().isBlank()) {
             thumbnailUrl = s3PresignedUrlProvider.presignGetUrl(t.getThumbnailKey());
@@ -313,6 +317,7 @@ public class TaskService {
                 .inout(t.getInout())
                 .createdAt(t.getCreatedAt())
                 .isTutorial(t.getIsTutorial())
+                .isOwner(isOwner)
                 .build();
     }
 
@@ -344,7 +349,17 @@ public class TaskService {
     public TaskResponse getSharedTask(String shareToken) {
         Task task = taskRepository.findByShareToken(shareToken)
                 .orElseThrow(() -> new GeneralException(ErrorStatus._NOT_FOUND_TASK));
-        return toResponse(task);
+
+        boolean isOwner = false;
+        try {
+            String currentUserId = authService.getAuthenticatedUserId();
+            Users user = userService.findExistingUser(currentUserId);
+            isOwner = Arrays.equals(task.getUser().getUserId(), user.getUserId());
+        } catch (Exception e) {
+            // 비로그인 상태
+        }
+
+        return toResponse(task, isOwner);
     }
 
     private String extractDomain(String link) {
