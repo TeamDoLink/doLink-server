@@ -48,13 +48,13 @@ public class SearchService {
         // 2. 페이징 설정 (최신순)
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // 3. 키워드가 없거나 공백이면 빈 Slice 반환
+        // 3. 키워드가 없거나 공백이면 전체 목록 조회
+        Slice<Collection> collectionSlice;
         if (keyword == null || keyword.trim().isEmpty()) {
-            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+            collectionSlice = collectionRepository.findAllByUserOrderByCreatedAtDesc(user, pageable);
+        } else {
+            collectionSlice = collectionRepository.findByUserAndNameContaining(user, keyword, pageable);
         }
-
-        // 4. 모음 이름 검색
-        Slice<Collection> collectionSlice = collectionRepository.findByUserAndNameContaining(user, keyword, pageable);
         List<Collection> collections = collectionSlice.getContent();
 
         // 5. 썸네일 포함하여 DTO 변환

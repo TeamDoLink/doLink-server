@@ -42,7 +42,7 @@ public class SearchController {
     @GetMapping("/collections")
     @Operation(summary = "모음 검색", description = "키워드가 이름에 포함된 모음을 페이징하여 조회한다.")
     public ApiResponse<Slice<CollectionResponse>> searchCollections(
-            @Parameter(description = "검색어") @RequestParam String keyword,
+            @Parameter(description = "검색어") @RequestParam(required = false) String keyword,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
     ) {
