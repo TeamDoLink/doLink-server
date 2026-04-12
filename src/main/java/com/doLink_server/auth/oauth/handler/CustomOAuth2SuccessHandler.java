@@ -1,19 +1,16 @@
 package com.doLink_server.auth.oauth.handler;
 
 
+import com.doLink_server.auth.service.AuthRefreshCookieWriter;
 import com.doLink_server.auth.service.JwtIssueService;
 import com.doLink_server.auth.service.RedisService;
 import com.doLink_server.global.util.UUIDToBytesUtil;
-import com.doLink_server.security.jwt.JwtProperties;
-import com.doLink_server.security.jwt.JwtProvider;
 import com.doLink_server.user.entity.Users;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -30,17 +27,12 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JwtProvider jwtProvider;
     private final RedisService redisService;
-    private final JwtProperties jwtProperties;
     private final JwtIssueService jwtIssueService;
-    private final Environment environment;
+    private final AuthRefreshCookieWriter authRefreshCookieWriter;
 
     @Value("${auth.redirect.url}")
     private String redirectUrl;
-
-    @Value("${auth.cookie.domain}")
-    private String cookieDomain;
 
     /**
      * 인증 성공시, 리프레시 토큰을 Http Only 쿠키로 반환한다.
@@ -83,7 +75,7 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         // 5. HttpOnly, Secure 옵션 적용한 쿠키에 refreshToken 세팅
         // accessToken은 쿠키에 담지 않고, 필요하다면 이후 API 요청으로 전달받도록 구성
-        addRefreshTokenCookie(response, finalRefreshToken);
+        authRefreshCookieWriter.addRefreshTokenCookie(response, finalRefreshToken);
 
 //        String accessToken = tokenService.issueAccessToken(userId);
 //        response.setHeader("Authorization", "Bearer " + accessToken);
@@ -127,44 +119,6 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     }
 
     /**
-     * 요청 쿠키에서 refreshToken 값을 추출한다.
-     * @param request HttpServletRequest
-     * @return 쿠키에 "refresh" 이름으로 저장된 토큰 값, 없으면 null 반환
-     */
-    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-
-        for (Cookie cookie : request.getCookies()) {
-            if ("refresh".equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * HttpOnly, Secure 옵션이 적용된 리프레시 토큰 쿠키를 생성하고 응답에 추가
-     */
-    private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        Cookie cookie = new Cookie("refresh", refreshToken);
-        cookie.setHttpOnly(true);  // 자바스크립트에서 접근 불가
-        cookie.setSecure(isSecure());  // 환경에 따라 true/false
-        cookie.setPath("/");       // 모든 경로에 대해 유효
-        cookie.setDomain(cookieDomain); // 루트 도메인
-        cookie.setMaxAge((int) (jwtProperties.getRefreshTokenExpiration() / 1000));  // 초 단위 만료시간
-        response.addCookie(cookie);
-    }
-
-    private boolean isSecure() {
-        for (String profile : environment.getActiveProfiles()) {
-            if ("prod".equals(profile)) {
-                return true;
-            }
-        }
-        return false; // local, dev 등의 경우
-    }
-
-    /**
      * 오류 로그를 기록하고 401 Unauthorized 응답 전송
      */
     private void logAndSendError(HttpServletResponse response, String message) throws IOException {
@@ -173,14 +127,4 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
     }
 
-    /**
-     * JWT 토큰의 Claims(payload)를 JSON 형식으로 예쁘게 로그에 출력한다.
-     * 디버깅용으로 Redis와 클라이언트 토큰 비교 시 호출하면 유용하다.
-     */
-    private void logTokenDetails(String label, String token) {
-        jwtProvider.extractClaimsAsJson(token).ifPresentOrElse(
-                json -> log.info(">>> JWT Claims [{}]:\n{}", label, json),
-                () -> log.warn("JWT Claims [{}]: 유효하지 않아 파싱 실패", label)
-        );
-    }
 }

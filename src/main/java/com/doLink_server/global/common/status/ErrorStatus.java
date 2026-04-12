@@ -29,6 +29,9 @@ public enum ErrorStatus implements BaseErrorCode {
     _FILE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "FILE503", "파일삭제에 실패하였습니다."),
     _WITHDRAW_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "USER500", "사용자 삭제에 실패하였습니다."),
 
+    // Google 네이티브 로그인 (ID 토큰)
+    _INVALID_GOOGLE_ID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH4003", "유효하지 않은 Google ID 토큰입니다."),
+
     // Social 인증 해제 에러
     _UNSUPPORTED_SOCIAL_PLATFORM(HttpStatus.BAD_REQUEST, "SOCIAL400", "지원하지 않는 소셜 플랫폼입니다."),
     _NOT_IMPLEMENTED_SOCIAL(HttpStatus.NOT_IMPLEMENTED, "SOCIAL501", "해당 소셜 플랫폼의 해제 기능은 아직 구현되지 않았습니다."),
