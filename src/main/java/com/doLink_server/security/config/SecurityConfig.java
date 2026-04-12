@@ -107,6 +107,7 @@ public class SecurityConfig {
      */
     private static final String[] WHITE_LIST_URL = {
             "/v1/auth/reissue",
+            "/v1/auth/oauth/google/native",
 
             // swagger
             "/v3/api-docs/**",

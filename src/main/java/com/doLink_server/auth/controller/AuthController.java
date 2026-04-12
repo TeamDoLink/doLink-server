@@ -1,5 +1,9 @@
 package com.doLink_server.auth.controller;
 
+import com.doLink_server.auth.dto.GoogleNativeLoginRequest;
+import com.doLink_server.auth.dto.GoogleNativeTokenResult;
+import com.doLink_server.auth.service.AuthRefreshCookieWriter;
+import com.doLink_server.auth.service.GoogleNativeAuthService;
 import com.doLink_server.auth.service.JwtIssueService;
 import com.doLink_server.auth.service.RedisService;
 import com.doLink_server.global.common.ApiResponse;
@@ -11,10 +15,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,6 +38,24 @@ public class AuthController {
     private final JwtProvider jwtProvider;
     private final JwtIssueService jwtIssueService;
     private final RedisService redisService;
+    private final GoogleNativeAuthService googleNativeAuthService;
+    private final AuthRefreshCookieWriter authRefreshCookieWriter;
+
+    /**
+     * Android/iOS 네이티브 Google Sign-In: ID 토큰 검증 후 JWT 발급
+     */
+    @PostMapping("/oauth/google/native")
+    @Operation(summary = "Google 네이티브 로그인", description = "Google ID 토큰을 검증하고 access·refresh JWT를 발급합니다.")
+    public ResponseEntity<ApiResponse<GoogleNativeTokenResult>> googleNativeLogin(
+            @Valid @RequestBody GoogleNativeLoginRequest request,
+            HttpServletResponse httpResponse
+    ) {
+        GoogleNativeTokenResult result = googleNativeAuthService.loginWithIdToken(request.idToken());
+        authRefreshCookieWriter.addRefreshTokenCookie(httpResponse, result.refreshToken());
+        return ResponseEntity.ok()
+                .header("Authorization", "Bearer " + result.accessToken())
+                .body(ApiResponse.onSuccess(result));
+    }
 
     /**
      * AccessToken 재발급
