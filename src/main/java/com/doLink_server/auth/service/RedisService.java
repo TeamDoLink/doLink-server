@@ -88,4 +88,25 @@ public class RedisService {
         String key = buildKey(userId);
         return redisTemplate.opsForValue().get(key);
     }
+
+    /**
+     * 소셜 refresh token 저장
+     */
+    public void saveSocialRefreshToken(String userId, String token) {
+        redisTemplate.opsForValue().set("social_refresh:" + userId, token);
+    }
+
+    /**
+     * 소셜 refresh token 조회
+     */
+    public String getSocialRefreshToken(String userId) {
+        return redisTemplate.opsForValue().get("social_refresh:" + userId);
+    }
+
+    /**
+     * 소셜 refresh token 삭제
+     */
+    public void removeSocialRefreshToken(String userId) {
+        redisTemplate.delete("social_refresh:" + userId);
+    }
 }

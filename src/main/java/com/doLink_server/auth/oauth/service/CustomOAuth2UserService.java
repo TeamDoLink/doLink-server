@@ -4,7 +4,9 @@ package com.doLink_server.auth.oauth.service;
 import com.doLink_server.auth.oauth.model.GoogleUserInfo;
 import com.doLink_server.auth.oauth.model.KakaoUserInfo;
 import com.doLink_server.auth.oauth.model.OAuth2UserInfo;
+import com.doLink_server.auth.service.RedisService;
 import com.doLink_server.global.exception.GeneralException;
+import com.doLink_server.global.util.UUIDToBytesUtil;
 import com.doLink_server.user.entity.Users;
 import com.doLink_server.user.service.UserService;
 import lombok.AllArgsConstructor;
@@ -31,6 +33,7 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserService userService;
+    private final RedisService redisService;
 
     /**
      * OAuth2 로그인 성공 시 호출되는 메서드
@@ -45,6 +48,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2UserInfo userInfo = createOAuth2UserInfo(registrationId, attributes);
         Users user = findOrRegisterUser(userInfo);
+
+        // 구글 로그인 시 refresh token 저장
+        if ("google".equals(registrationId)) {
+            String refreshTokenValue = (String) userRequest.getAdditionalParameters().get("refresh_token");
+            if (refreshTokenValue != null) {
+                String userId = UUIDToBytesUtil.convertToEntityAttribute(user.getUserId()).toString();
+                redisService.saveSocialRefreshToken(userId, refreshTokenValue);
+                log.info("▶ 구글 refresh token 저장 완료. UserId: {}", userId);
+            }
+        }
 
         Map<String, Object> extendedAttributes = buildExtendedAttributes(attributes, user);
         extendedAttributes.put("registrationId", registrationId);

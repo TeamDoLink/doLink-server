@@ -27,7 +27,8 @@ public class UserUseCase {
             // 1. 소셜 인증 해제
             authService.unlinkAuthenticatedUser(
                     loginUser.getSocialId(),
-                    loginUser.getSocialName()
+                    loginUser.getSocialName(),
+                    userId
             );
 
             // 2. 사용자 데이터 삭제 (연관 테이블 포함)
