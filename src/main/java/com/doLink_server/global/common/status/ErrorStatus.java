@@ -36,7 +36,6 @@ public enum ErrorStatus implements BaseErrorCode {
     _UNSUPPORTED_SOCIAL_PLATFORM(HttpStatus.BAD_REQUEST, "SOCIAL400", "지원하지 않는 소셜 플랫폼입니다."),
     _NOT_IMPLEMENTED_SOCIAL(HttpStatus.NOT_IMPLEMENTED, "SOCIAL501", "해당 소셜 플랫폼의 해제 기능은 아직 구현되지 않았습니다."),
     _KAKAO_UNLINK_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SOCIAL502", "카카오 관리자 인증 해제에 실패했습니다."),
-    _GOOGLE_UNLINK_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SOCIAL503", "구글 인증 해제에 실패했습니다."),
 
     // 두링크_collection 에러
     _INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "COLL400", "유효하지 않은 모음 카테고리입니다."),

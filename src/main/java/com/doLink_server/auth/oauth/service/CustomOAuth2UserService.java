@@ -49,16 +49,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserInfo userInfo = createOAuth2UserInfo(registrationId, attributes);
         Users user = findOrRegisterUser(userInfo);
 
-        // 구글 로그인 시 refresh token 저장
-        if ("google".equals(registrationId)) {
-            String refreshTokenValue = (String) userRequest.getAdditionalParameters().get("refresh_token");
-            if (refreshTokenValue != null) {
-                String userId = UUIDToBytesUtil.convertToEntityAttribute(user.getUserId()).toString();
-                redisService.saveSocialRefreshToken(userId, refreshTokenValue);
-                log.info("▶ 구글 refresh token 저장 완료. UserId: {}", userId);
-            }
-        }
-
         Map<String, Object> extendedAttributes = buildExtendedAttributes(attributes, user);
         extendedAttributes.put("registrationId", registrationId);
         List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("ROLE_USER");
