@@ -92,7 +92,13 @@ public class SecurityConfig {
 
         http.cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of(redirectUrl));
+                    config.setAllowedOrigins(List.of(
+                            "http://localhost:3000",
+                            "https://api.dolink.team",
+                            "https://app.dolink.team",
+                            "https://dolink.team",
+                            redirectUrl
+                    ));
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
